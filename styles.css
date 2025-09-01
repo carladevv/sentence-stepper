@@ -1,0 +1,165 @@
+/* base */
+.sstep-sentence {
+  /* make background/border apply per wrapped line, not as one big box */
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.sstep-muted { opacity: .25; transition: opacity .15s; }
+
+/* Toolbar (unchanged) */
+.sstep-toolbar {
+  position: fixed; z-index: 2147483647; top: 12px; right: 12px;
+  background: #fff; border: 1px solid #ddd; border-radius: 10px;
+  padding: 6px 8px; font: 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 4px 24px rgba(0,0,0,.1); display: flex; align-items: center; gap: 6px;
+}
+.sstep-toolbar .brand { opacity: .7; font-weight: 600; margin-right: 4px; }
+.sstep-toolbar .spacer { width: 6px; height: 1px; background: #eee; margin: 0 2px; }
+.sstep-toolbar select { font: inherit; }
+
+/* Optional page-wide veil */
+.sstep-gradient::before{
+  content:""; position: fixed; inset:0; pointer-events:none;
+  background: linear-gradient(#fff 0, rgba(255,255,255,.5) 20%, rgba(255,255,255,.85) 65%, #fff 100%);
+}
+
+/* ---------------- THEMES ---------------- */
+
+/* Default “box” highlighter — replaces outline with border; per-line cleanly */
+.sstep-theme-box .sstep-current {
+  background: rgba(255,255,0,.30);
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 0 .08em;             /* tiny breathing room so border doesn’t touch glyphs */
+}
+
+/* “Underline highlighter” — only a stripe under the text (won’t touch other lines) */
+.sstep-theme-underline .sstep-current {
+  background: none;
+  border: none;
+  box-shadow:  inset 0 -0.75em 0 rgba(255,255,0,.30); /* thickness ≈ 0.35em; tweak if you like */
+}
+
+/* “No highlight” — rely only on dimming around it */
+.sstep-theme-none .sstep-current {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* “Left→Right gradient fill” on each line fragment */
+.sstep-theme-gradient .sstep-current {
+  border: none;
+  border-radius: 4px;
+  padding: 0 .08em;
+  background-image: linear-gradient(90deg, rgba(255,0,0,.22), rgba(0,0,255,.22));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/* — Gradient per line (what you already had) — */
+.sstep-theme-gradient-line .sstep-current{
+  border: none; border-radius: 4px; padding: 0 .08em;
+  background-image: linear-gradient(90deg, rgba(255,0,0,.22), rgba(0,0,255,.22));
+  background-repeat: no-repeat; background-size: 100% 100%;
+}
+
+/* — Gradient from sentence start→end (drawn via overlay; span itself stays clean) — */
+.sstep-theme-gradient-span .sstep-current{
+  background: none; border: none; box-shadow: none;
+}
+
+/* Overlay container sits above content, below toolbar */
+#sstep-gradient-overlay{
+  position: absolute; left: 0; top: 0; pointer-events: none;
+  z-index: 2147483646; /* toolbar is 2147483647 */
+}
+
+/* ===== Toolbar ===== */
+.sstep-toolbar{
+  position:fixed; z-index:2147483647;
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  background:#f8fafc;              /* softer than pure white */
+  color:#111827;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  font:13px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+
+.sstep-toolbar .brand{ opacity:.75; font-weight:600; margin-right:4px; white-space:nowrap; }
+
+.sstep-toolbar .btn{
+  all:unset; cursor:pointer;
+  padding:6px 10px; border-radius:8px;
+  background:#eef2f7;               /* soft grey button */
+  border:1px solid #d6dde7;
+  color:#111827;
+}
+.sstep-toolbar .btn:hover{ background:#e3e9f1; }
+.sstep-toolbar .btn:active{ background:#d6dde7; }
+
+.sstep-toolbar .select{
+  all:unset; font:inherit;
+  padding:6px 8px; border-radius:8px;
+  border:1px solid #d6dde7;
+  background:#ffffff;               /* keep selects white for readability */
+}
+
+/* Compact: hide all but brand + toggle */
+.sstep-toolbar.compact .hide-when-compact{ display:none !important; }
+
+/* Anchors */
+.sstep-pos-tr{ top:1vw; right:1vw; left:auto; bottom:auto; transform:none; }
+.sstep-pos-tl{ top:1vw; left:1vw; right:auto; bottom:auto; transform:none; }
+.sstep-pos-br{ bottom:1vw; right:1vw; top:auto; left:auto; transform:none; }
+.sstep-pos-bl{ bottom:1vw; left:1vw; top:auto; right:auto; transform:none; }
+.sstep-pos-tc{ top:1vw; left:50%; right:auto; bottom:auto; transform:translateX(-50%); }
+.sstep-pos-bc{ bottom:1vw; left:50%; right:auto; top:auto; transform:translateX(-50%); }
+
+/* Position icon button */
+.sstep-toolbar .iconbtn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:32px; padding:0;
+}
+.sstep-toolbar .iconbtn img {
+  width:18px; height:18px; display:block;
+}
+
+/* Popover grid */
+.sstep-toolbar .pos-popover{
+  position:absolute;
+  top:100%; right:0; margin-top:8px;
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+  box-shadow:0 10px 28px rgba(0,0,0,.12);
+  padding:8px;
+  display:grid; grid-template-columns:repeat(3, 32px); gap:8px;
+  z-index:2147483647;
+}
+.sstep-toolbar .pos-popover .pos-item{
+  all:unset; cursor:pointer;
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  background:#f3f6fb; border:1px solid #d6dde7;
+}
+.sstep-toolbar .pos-popover .pos-item:hover{ background:#e9eef6; }
+.sstep-toolbar .pos-popover .pos-item.active{ outline:2px solid #94a3b8; }
+.sstep-toolbar .pos-popover .pos-item img{ width:18px; height:18px; }
+
+/* make sure the popover actually hides even if the page overrides [hidden] */
+.sstep-toolbar .pos-popover[hidden] { display: none !important; }
+
+/* optional: ensure the toolbar is the containing block for its popover */
+.sstep-toolbar { position: fixed; } /* you already had this */
+
+/* When toolbar is at the bottom, show the popover above it */
+.sstep-toolbar .pos-popover.flip-up{
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+

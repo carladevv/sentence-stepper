@@ -1,0 +1,165 @@
+(() => {
+  const S = (window.SStep = window.SStep || {});
+  const ST = S.state;
+
+  S.THEMES = ["box", "underline", "none", "gradient-line", "gradient-span", "gradient-text-span"];
+
+  S.setTheme = function setTheme(name = "box") {
+    const cls = S.THEMES.map(t => "sstep-theme-" + t);
+    document.documentElement.classList.remove(...cls);
+    document.documentElement.classList.add("sstep-theme-" + name);
+    try { localStorage.setItem("sstep-theme", name); } catch {}
+    S.scheduleOverlayUpdate();
+  };
+
+  S.ensureOverlay = function ensureOverlay() {
+    if (!ST.overlayEl) {
+      ST.overlayEl = document.getElementById("sstep-gradient-overlay");
+      if (!ST.overlayEl) {
+        ST.overlayEl = document.createElement("div");
+        ST.overlayEl.id = "sstep-gradient-overlay";
+        Object.assign(ST.overlayEl.style, {
+          position: "absolute",
+          left: "0px",
+          top: "0px",
+          pointerEvents: "none",
+          zIndex: "2147483646",
+          userSelect: "none",
+          MozUserSelect: "none",
+          WebkitUserSelect: "none"
+        });
+        document.body.appendChild(ST.overlayEl);
+      }
+    }
+    return ST.overlayEl;
+  };
+
+  S.clearOverlay = function clearOverlay() { if (ST.overlayEl) ST.overlayEl.replaceChildren(); };
+
+  function caretStartAt(x, y) {
+    if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(x, y);
+      return r ? { node: r.startContainer, offset: r.startOffset } : null;
+    }
+    if (document.caretPositionFromPoint) {
+      const p = document.caretPositionFromPoint(x, y);
+      return p ? { node: p.offsetNode, offset: p.offset } : null;
+    }
+    return null;
+  }
+  function rangeBetweenPoints(x1, y1, x2, y2) {
+    const s = caretStartAt(x1, y1), e = caretStartAt(x2, y2);
+    if (!s || !e) return null;
+    const r = document.createRange();
+    try { r.setStart(s.node, s.offset); r.setEnd(e.node, e.offset); return r.collapsed ? null : r; }
+    catch { return null; }
+  }
+
+  S.restoreSpanColor = function restoreSpanColor(span) {
+    if (!span) return;
+    span.style.color = "";
+    span.style.webkitTextFillColor = "";
+  };
+
+  S.updateGradientOverlay = function updateGradientOverlay() {
+    S.clearOverlay();
+    if (!ST.enabled) {
+      if (ST.lastTextPaintIndex !== -1) { S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]); ST.lastTextPaintIndex = -1; }
+      return;
+    }
+    const curSpan = ST.sentences[ST.current];
+    if (!curSpan) return;
+
+    const isSpanBg = document.documentElement.classList.contains("sstep-theme-gradient-span");
+    const isTextSpan = document.documentElement.classList.contains("sstep-theme-gradient-text-span");
+    if (!isSpanBg && !isTextSpan) {
+      if (ST.lastTextPaintIndex !== -1) { S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]); ST.lastTextPaintIndex = -1; }
+      return;
+    }
+
+    const r = document.createRange();
+    r.selectNodeContents(curSpan);
+    const rects = Array.from(r.getClientRects());
+    if (!rects.length) return;
+
+    const total = rects.reduce((a, rc) => a + rc.width, 0);
+    let offset = 0;
+    const ov = S.ensureOverlay();
+
+    if (isTextSpan && ST.lastTextPaintIndex !== -1 && ST.lastTextPaintIndex !== ST.current) {
+      S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]);
+    }
+
+    for (const rc of rects) {
+      const left = rc.left + window.scrollX, top = rc.top + window.scrollY;
+      const fudge = 1;
+
+      if (isSpanBg) {
+        const piece = document.createElement("div");
+        Object.assign(piece.style, {
+          position: "absolute",
+          left: left + "px",
+          top: (top - fudge) + "px",
+          width: rc.width + "px",
+          height: (rc.height + 2*fudge) + "px",
+          borderRadius: "4px",
+          backgroundImage: "linear-gradient(90deg, rgba(255,0,0,.28), rgba(0,0,255,.28))",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: total + "px 100%",
+          backgroundPosition: (-offset) + "px 0",
+          transform: "translateZ(0)"
+        });
+        ov.appendChild(piece);
+      }
+
+      if (isTextSpan) {
+        curSpan.style.color = "transparent";
+        curSpan.style.webkitTextFillColor = "transparent";
+
+        const midY = rc.top + rc.height / 2;
+        const startX = rc.left + 0.5, endX = rc.right - 0.5;
+        const lineRange = rangeBetweenPoints(startX, midY, endX, midY);
+        if (!lineRange) { offset += rc.width; continue; }
+
+        const frag = lineRange.cloneContents();
+        const wrap = document.createElement("div");
+        Object.assign(wrap.style, {
+          position: "absolute",
+          left: left + "px",
+          top: (top - fudge) + "px",
+          width: rc.width + "px",
+          height: (rc.height + 2*fudge) + "px",
+          overflow: "hidden",
+          backgroundImage: "linear-gradient(90deg, rgba(255,0,0,1), rgba(0,0,255,1))",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: total + "px 100%",
+          backgroundPosition: (-offset) + "px 0",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          color: "transparent",
+          borderRadius: "4px",
+          display: "block",
+          lineHeight: (rc.height + 2*fudge) + "px",
+          whiteSpace: "nowrap",
+          transform: "translateZ(0)"
+        });
+        const cs = getComputedStyle(curSpan);
+        wrap.style.font = cs.font;
+        wrap.style.letterSpacing = cs.letterSpacing;
+        wrap.style.wordSpacing = cs.wordSpacing;
+
+        wrap.appendChild(frag);
+        ov.appendChild(wrap);
+      }
+
+      offset += rc.width;
+    }
+    if (isTextSpan) ST.lastTextPaintIndex = ST.current;
+  };
+
+  S.scheduleOverlayUpdate = function scheduleOverlayUpdate() {
+    cancelAnimationFrame(ST.overlayRaf);
+    ST.overlayRaf = requestAnimationFrame(S.updateGradientOverlay);
+  };
+})();
