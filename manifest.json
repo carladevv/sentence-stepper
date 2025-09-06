@@ -1,54 +1,24 @@
 {
   "manifest_version": 3,
+  "name": "Sentence Stepper",
+  "version": "0.2.0",
+  "description": "Step through page text sentence by sentence.",
+  "permissions": ["scripting", "activeTab"],
+  "action": { "default_title": "Sentence Stepper" },
+  "background": { "service_worker": "background.js" },
+
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "name": "Sentence Stepper",
-  "version": "0.2.0",
-  "description": "Step through page text sentence by sentence.",
-  "permissions": [
-    "scripting",
-    "activeTab"
-  ],
-  "action": {
-    "default_title": "Sentence Stepper"
-  },
+
+  "web_accessible_resources": [{
+    "resources": ["pos-icons/*"],
+    "matches": ["<all_urls>"]
+  }],
+
   "browser_specific_settings": {
-    "gecko": {
-      "id": "sentence-stepper@example.com",
-      "strict_min_version": "109.0"
-    }
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "pos-icons/*"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "Readability.js",
-        "sstep/01-utils.js",
-        "sstep/02-language.js",
-        "sstep/03-dom.js",
-        "sstep/04-overlay.js",
-        "sstep/05-toolbar.js",
-        "sstep/06-main.js"
-      ],
-      "css": [
-        "styles.css"
-      ],
-      "run_at": "document_idle"
-    }
-  ]
+    "gecko": { "id": "sentence-stepper@example.com", "strict_min_version": "109.0" }
+  }
 }
