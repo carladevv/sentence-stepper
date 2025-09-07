@@ -67,7 +67,7 @@
       if (ST.lastTextPaintIndex !== -1) { S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]); ST.lastTextPaintIndex = -1; }
       return;
     }
-    const curSpan = ST.sentences[ST.current];
+    const curSpan = ST.sentences?.[ST.current];
     if (!curSpan) return;
 
     const isSpanBg = document.documentElement.classList.contains("sstep-theme-gradient-span");
