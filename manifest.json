@@ -3,22 +3,38 @@
   "name": "Sentence Stepper",
   "version": "0.2.0",
   "description": "Step through page text sentence by sentence.",
-  "permissions": ["scripting", "activeTab"],
-  "action": { "default_title": "Sentence Stepper" },
-  "background": { "service_worker": "background.js" },
-
+  "permissions": [
+    "scripting",
+    "activeTab"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_title": "Sentence Stepper"
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-
-  "web_accessible_resources": [{
-    "resources": ["pos-icons/*"],
-    "matches": ["<all_urls>"]
-  }],
-
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pdfjs/*",
+        "pos-icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "browser_specific_settings": {
-    "gecko": { "id": "sentence-stepper@example.com", "strict_min_version": "109.0" }
+    "gecko": {
+      "id": "sentence-stepper@example.com",
+      "strict_min_version": "109.0"
+    }
   }
 }

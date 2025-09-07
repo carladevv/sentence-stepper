@@ -1,19 +1,24 @@
 (() => {
   const S = (window.SStep = window.SStep || {});
 
+  // 03-dom.js
   S.pickMainRoot = function pickMainRoot() {
+    // If the viewer tells us to scope to a specific element (e.g., the current PDF page), use it.
+    if (S.rootEl && S.rootEl.isConnected) return S.rootEl;
+
     const candidates = [
       "#mw-content-text", ".mw-parser-output", "[role='main']", "main", "article",
       "#content", ".content", ".post", ".entry", ".article-body", ".story-body", ".post-content"
     ].flatMap(sel => Array.from(document.querySelectorAll(sel)));
     const byLen = el => (el.innerText || "").trim().length;
-    let best = candidates.sort((a,b)=>byLen(b)-byLen(a))[0];
+    let best = candidates.sort((a, b) => byLen(b) - byLen(a))[0];
     if (!best) {
       const scan = Array.from(document.querySelectorAll("main, article, #content, .content, body"));
-      best = scan.sort((a,b)=>byLen(b)-byLen(a))[0] || document.body;
+      best = scan.sort((a, b) => byLen(b) - byLen(a))[0] || document.body;
     }
     return best;
   };
+
 
   S.findFirstContentP = function findFirstContentP(root) {
     const isTiny = p => (p.innerText || "").trim().length < 80;

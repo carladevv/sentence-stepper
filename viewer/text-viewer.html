@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentence-Stepper — Text Viewer</title>
+<link rel="stylesheet" href="viewer.css" />
+<link rel="stylesheet" href="../styles.css" />
+
+<body>
+  <div id="topbar">
+    <div class="left">
+      <button id="open-file">Open PDF…</button>
+      <input type="file" id="file-input" accept="application/pdf" hidden />
+      <span id="status"></span>
+    </div>
+    <div class="right" id="pager">
+      <button id="themeToggle" title="Toggle dark/light">Dark</button>
+      <button id="prevPage" title="←">◀</button>
+      <span id="pageLabel">– / –</span>
+      <button id="nextPage" title="→">▶</button>
+      <input id="pageJump" type="number" min="1" step="1" placeholder="Go…" title="Go to page… (Enter)">
+    </div>
+  </div>
+
+  <div id="layout">
+    <main id="content" aria-label="Extracted PDF text"></main>
+  </div>
+
+  <!-- Your addon (toolbar + logic) -->
+  <script src="../sstep/01-utils.js"></script>
+  <script src="../sstep/02-language.js"></script>
+  <script src="../sstep/03-dom.js"></script>
+  <script src="../sstep/04-overlay.js"></script>
+  <script src="../sstep/05-toolbar.js"></script>
+  <script src="../sstep/06-main.js"></script>
+
+  <!-- PDF.js ESM bootstrap -->
+  <script type="module" src="pdfjs-setup.mjs"></script>
+  <!-- Flow renderer -->
+  <script type="module" src="pdf-fascimile.mjs"></script>
+  <!-- Optional flow formatter (just classes; safe for stepping) -->
+  <script type="module" src="pdf-flow-formatter.mjs"></script>
+  <!-- Viewer logic -->
+  <script defer src="text-viewer.js"></script>
+</body>

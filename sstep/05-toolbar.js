@@ -15,21 +15,11 @@
   const RT = (typeof browser !== "undefined" ? browser : chrome);
   const extURL = (p) => (RT?.runtime?.getURL ? RT.runtime.getURL(p) : p);
 
-  function isBottom(mode) {
-    return mode && mode.startsWith("b"); // bl, bc, br
-  }
-  function updatePopoverDirection(mode) {
-    if (!posPop) return;
-    posPop.classList.toggle("flip-up", isBottom(mode));
-  }
+  function isBottom(mode) { return mode && mode.startsWith("b"); }
+  function updatePopoverDirection(mode) { if (posPop) posPop.classList.toggle("flip-up", isBottom(mode)); }
 
-  function loadPos() {
-    try { return localStorage.getItem(POS_KEY) || DEFAULT_POS; }
-    catch { return DEFAULT_POS; }
-  }
-  function savePos(mode) {
-    try { localStorage.setItem(POS_KEY, mode); } catch {}
-  }
+  function loadPos() { try { return localStorage.getItem(POS_KEY) || DEFAULT_POS; } catch { return DEFAULT_POS; } }
+  function savePos(mode) { try { localStorage.setItem(POS_KEY, mode); } catch { } }
   function applyPos(mode) {
     if (!barEl) return;
     barEl.classList.remove("sstep-pos-tl", "sstep-pos-tr", "sstep-pos-bl", "sstep-pos-br", "sstep-pos-tc", "sstep-pos-bc");
@@ -49,7 +39,6 @@
   S.setToolbarCompact = function setToolbarCompact(isCompact) {
     if (!barEl) return;
     barEl.classList.toggle("compact", !!isCompact);
-    // close popover if compacted
     if (posPop) posPop.hidden = true;
   };
 
@@ -58,21 +47,12 @@
     const modes = ["tl", "tc", "tr", "bl", "bc", "br"];
     for (const m of modes) {
       const b = document.createElement("button");
-      b.className = "pos-item";
-      b.type = "button";
-      b.dataset.mode = m;
-      b.title = POS_LABELS[m];
+      b.className = "pos-item"; b.type = "button"; b.dataset.mode = m; b.title = POS_LABELS[m];
       const img = document.createElement("img");
-      img.decoding = "async";
-      img.loading = "lazy";
-      img.src = iconFor(m);
-      img.alt = POS_LABELS[m];
+      img.decoding = "async"; img.loading = "lazy"; img.src = iconFor(m); img.alt = POS_LABELS[m];
       b.appendChild(img);
       if (m === currentMode) b.classList.add("active");
-      b.onclick = () => {
-        savePos(m); applyPos(m); setPosButton(m);
-        posPop.hidden = true;
-      };
+      b.onclick = () => { savePos(m); applyPos(m); setPosButton(m); posPop.hidden = true; };
       posPop.appendChild(b);
     }
   }
@@ -80,9 +60,7 @@
   function wireOutsideClose() {
     document.addEventListener("mousedown", (e) => {
       if (!posPop || posPop.hidden) return;
-      if (!posPop.contains(e.target) && !posBtn.contains(e.target)) {
-        posPop.hidden = true;
-      }
+      if (!posPop.contains(e.target) && !posBtn.contains(e.target)) posPop.hidden = true;
     }, true);
   }
 
@@ -126,8 +104,11 @@
       </button>
       <div class="pos-popover hide-when-compact" id="sstep-pos-pop" hidden></div>
 
+      <!-- NEW: PDF button -->
+      <button class="btn" id="sstep-open-pdf" title="Open Text Viewer (load a PDF)">PDF</button>
+
       <button class="btn" id="sstep-toggle" title="Toggle effect">On</button>
-    `; // NOTE: initial label is "On" because clicking turns it on.
+    `;
 
     document.documentElement.appendChild(barEl);
 
@@ -135,12 +116,20 @@
     document.getElementById("sstep-prev").onclick = () => S.prev();
     document.getElementById("sstep-next").onclick = () => S.next();
 
+    // NEW: PDF button → opens Text Viewer in a new tab
+    const openPdfBtn = document.getElementById("sstep-open-pdf");
+    const RT = (typeof browser !== "undefined" ? browser : chrome);
+
+    openPdfBtn.onclick = () => {
+      RT.runtime.sendMessage({ cmd: "sstep_open_text_viewer" });
+    };
+
     ST.toggleBtn = document.getElementById("sstep-toggle");
     ST.toggleBtn.onclick = () => {
       if (ST.enabled) {
         S.removeEffect(true);
         S.setToolbarCompact(true);
-        try { localStorage.setItem("sstep-enabled", "false"); } catch {}
+        try { localStorage.setItem("sstep-enabled", "false"); } catch { }
       } else {
         if (ST.sentences.length && document.querySelector(".sstep-sentence")) {
           ST.enabled = true; S.attachKeys(); S.focusIndex(ST.current); ST.toggleBtn.textContent = "Off";
@@ -148,7 +137,7 @@
           S.applyEffect();
         }
         S.setToolbarCompact(false);
-        try { localStorage.setItem("sstep-enabled", "true"); } catch {}
+        try { localStorage.setItem("sstep-enabled", "true"); } catch { }
       }
     };
 
@@ -179,7 +168,6 @@
       posPop.hidden = !posPop.hidden;
     };
 
-    // initial compact state follows ST.enabled (main sets this)
     S.setToolbarCompact(!ST.enabled);
   };
 })();

@@ -24,3 +24,16 @@ chrome.action.onClicked.addListener(async (tab) => {
     });
   }
 });
+
+// background.js
+const RT = (typeof browser !== "undefined" ? browser : chrome);
+
+RT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.cmd === "sstep_open_text_viewer") {
+    const url = RT.runtime.getURL("viewer/text-viewer.html");
+    RT.tabs.create({ url });
+    // no response needed
+  }
+});
+
+

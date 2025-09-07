@@ -50,53 +50,55 @@
   };
 
   // ---- build spans ----
-  S.buildSpansIfNeeded = function buildSpansIfNeeded() {
-    const existing = Array.from(document.querySelectorAll(".sstep-sentence"));
-    if (existing.length) { ST.sentences = existing; return; }
+S.buildSpansIfNeeded = function buildSpansIfNeeded() {
+  const root = S.pickMainRoot(); // now respects S.rootEl if set
+  // Reuse spans only inside this root (ignore spans from other pages/areas)
+  const existing = Array.from(root.querySelectorAll(".sstep-sentence"));
+  if (existing.length) { ST.sentences = existing; return; }
 
-    const root = S.pickMainRoot();
-    if (document.compatMode !== "CSS1Compat") root.normalize();
-    S.normalizeStructure(root);
-    const startAt = S.findFirstContentP(root);
-    const blocks = S.collectBlocks(root, startAt);
+  if (document.compatMode !== "CSS1Compat") root.normalize();
+  S.normalizeStructure(root);
+  const startAt = S.findFirstContentP(root);
+  const blocks = S.collectBlocks(root, startAt);
 
-    const allSpans = [];
-    const profile = S.currentProfile();
+  const allSpans = [];
+  const profile = S.currentProfile();
 
-    for (const block of blocks) {
-      const nodes = S.collectTextNodesIn(block);
-      if (!nodes.length) continue;
+  for (const block of blocks) {
+    const nodes = S.collectTextNodesIn(block);
+    if (!nodes.length) continue;
 
-      const map = S.buildIndexMap(nodes);
-      const bigText = nodes.map(n => n.nodeValue).join("");
-      const ranges = S.splitIntoSentencesIndices(bigText, profile);
+    const map = S.buildIndexMap(nodes);
+    const bigText = nodes.map(n => n.nodeValue).join("");
+    const ranges = S.splitIntoSentencesIndices(bigText, profile);
 
-      const endpoints = ranges.map(r => {
-        const start = Math.max(0, Math.min(r.start, bigText.length - 1));
-        const end   = Math.max(start + 1, Math.min(r.end,   bigText.length));
-        const s = S.findPos(start, map);
-        const e = S.findPos(end - 1, map);
-        return (s && e) ? { s, e } : null;
-      }).filter(Boolean);
+    const endpoints = ranges.map(r => {
+      const start = Math.max(0, Math.min(r.start, bigText.length - 1));
+      const end   = Math.max(start + 1, Math.min(r.end,   bigText.length));
+      const s = S.findPos(start, map);
+      const e = S.findPos(end - 1, map);
+      return (s && e) ? { s, e } : null;
+    }).filter(Boolean);
 
-      const blockSpans = [];
-      for (let i = endpoints.length - 1; i >= 0; i--) {
-        const { s, e } = endpoints[i];
-        const range = document.createRange();
-        try {
-          range.setStart(s.node, s.offset);
-          range.setEnd(e.node, e.offset + 1);
-          const span = document.createElement("span");
-          span.className = "sstep-sentence";
-          try { range.surroundContents(span); }
-          catch { const frag = range.extractContents(); span.appendChild(frag); range.insertNode(span); }
-          blockSpans.unshift(span);
-        } catch {}
-      }
-      allSpans.push(...blockSpans);
+    const blockSpans = [];
+    for (let i = endpoints.length - 1; i >= 0; i--) {
+      const { s, e } = endpoints[i];
+      const range = document.createRange();
+      try {
+        range.setStart(s.node, s.offset);
+        range.setEnd(e.node, e.offset + 1);
+        const span = document.createElement("span");
+        span.className = "sstep-sentence";
+        try { range.surroundContents(span); }
+        catch { const frag = range.extractContents(); span.appendChild(frag); range.insertNode(span); }
+        blockSpans.unshift(span);
+      } catch {}
     }
-    ST.sentences = allSpans;
-  };
+    allSpans.push(...blockSpans);
+  }
+  ST.sentences = allSpans;
+};
+
 
   // ---- apply/remove ----
   S.applyEffect = function applyEffect() {

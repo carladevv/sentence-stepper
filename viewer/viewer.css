@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f8f8f8;
+  --text: #111;
+  --muted: #666;
+  --border: rgba(0, 0, 0, .08);
+  --card: #fff;
+  --topbar-h: 5vh;
+}
+:root[data-theme="dark"] {
+  --bg: #111416;
+  --text: #e9e9ea;
+  --muted: #b4b6bb;
+  --border: rgba(255, 255, 255, .12);
+  --card: #161a1d;
+  --topbar-h: 5vh;
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  height: 100%;
+}
+
+/* top utility bar */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 800;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 12px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  height: var(--topbar-h);
+}
+#status { color: var(--muted); }
+
+/* main layout (single column) */
+#layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: min(1200px, 95vw);
+  margin: calc(var(--topbar-h) + 2vh) auto 5vh;
+}
+
+/* reading container */
+#content {
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  margin-top: 2vh;
+}
+
+/* each PDF page is a separate screen */
+.page { display: none; }
+.page.current { display: block; }
+
+/* controls */
+button, select, input[type="number"] {
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+button:hover { filter: brightness(0.98); }
+#pager { display: flex; align-items: center; gap: 8px; }
+#pageLabel { min-width: 6ch; text-align: center; }
+#pageJump { width: 7ch; text-align: right; }
+
+/* number input spinners off */
+#pageJump { -moz-appearance: textfield; appearance: textfield; }
+#pageJump::-webkit-outer-spin-button, #pageJump::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Sentence-Stepper above our chrome */
+.sstep-toolbar { z-index: 1200 !important; }
+#sstep-gradient-overlay, #sstep-overlay, .sstep-overlay { pointer-events: none !important; z-index: 1100 !important; }
+
+/* Facsimile (flow) layer */
+.page.facsimile { position: relative; padding: 0; }
+.page.facsimile .flowLayer {
+  position: absolute; inset: 0;
+  padding: 28px 36px;
+  max-width: 65ch;
+  margin: 0 auto;
+  overflow: hidden;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  font-kerning: normal;
+  font-feature-settings: "liga" 1, "kern" 1;
+  line-height: 1.45;
+}
+.page.facsimile .flowLayer p { margin: 0 0 0.85em 0; }
+.page.facsimile .flowLayer p.indent { text-indent: 1.5em; }
+.page.facsimile .flowLayer .h1 {
+  font-size: 1.6rem; line-height: 1.25; margin: 0.8em 0 0.3em; font-weight: 700; text-align: center;
+}
+.page.facsimile .flowLayer .h2 {
+  font-size: 1.25rem; line-height: 1.3; margin: 1.2em 0 0.5em; font-weight: 700;
+}
+.page.facsimile .flowLayer .blockquote {
+  margin: 0.9em 1.2em;
+  padding-left: 1em;
+  border-left: 3px solid color-mix(in srgb, currentColor 30%, transparent);
+  font-style: italic;
+}
