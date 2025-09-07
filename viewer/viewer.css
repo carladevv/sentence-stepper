@@ -56,6 +56,10 @@ html, body {
   margin-top: 2vh;
 }
 
+/* tighten the page card a bit, purely visual */
+#content { padding: 12px 14px; }
+.page.facsimile .flowLayer { padding: 26px 28px; }
+
 /* each PDF page is a separate screen */
 .page { display: none; }
 .page.current { display: block; }
@@ -110,4 +114,35 @@ button:hover { filter: brightness(0.98); }
   padding-left: 1em;
   border-left: 3px solid color-mix(in srgb, currentColor 30%, transparent);
   font-style: italic;
+}
+
+/* Headings & center alignment */
+.page.facsimile .flowLayer .h1,
+.page.facsimile .flowLayer .h2,
+.page.facsimile .flowLayer .center { text-align: center; }
+
+.page.facsimile .flowLayer .h1 { font-size: 1.8rem; line-height: 1.25; margin: 0.9em 0 0.35em; font-weight: 700; }
+.page.facsimile .flowLayer .h2 { font-size: 1.35rem; line-height: 1.3;  margin: 1.1em 0 0.55em; font-weight: 700; }
+
+/* Optional: tone down ornaments */
+.page.facsimile .flowLayer .ornament { opacity: .6; letter-spacing: .15em; }
+
+/* Simple table reconstructed from PDF text */
+.pdf-flow-table {
+  margin: 1rem auto;
+  border-collapse: collapse;
+  width: min(90%, 65ch);
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+.pdf-flow-table th,
+.pdf-flow-table td {
+  border: 1px solid var(--border);
+  padding: .5rem .6rem;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+.pdf-flow-table thead th {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  font-weight: 700;
 }
