@@ -1,35 +1,36 @@
 // sstep-veil.js
-// PDF-only refinements (exact/range mode):
-//  - White veil limited to the current PDF page area (under toolbar)
-//  - Clear yellow "box" highlight over the current sentence (matching your CSS)
-// Does NOT affect normal HTML pages or your original overlay.
+// PDF-only refinements for EXACT mode (range path):
+//  • White veil clipped to the current PDF page, Z-below topbar/toolbar
+//  • Yellow "box" highlight UNDER the text layer (so text isn't lightened)
 
 (() => {
   const S  = (window.SStep = window.SStep || {});
   const ST = S.state || (S.state = {});
 
-  // Veil config (white/soft gray)
-  S.veil = Object.assign({},
-    S.veil || {},
-    { enabled: true, color: "#fff", opacity: 0.85, pad: 3, radius: 6, zIndex: 1195 }
-  );
+  // Veil config: keep zIndex BELOW your topbar (which is ~800) and below SStep toolbar (~1200)
+  S.veil = Object.assign({}, S.veil || {}, {
+    enabled: true,
+    color: "#fff",
+    opacity: 0.85,
+    pad: 3,
+    radius: 6,
+    zIndex: 750,           // < topbar(800) and toolbar(1200)
+  });
 
-  // Range box config (matches your 'box' theme)
+  // Yellow box style to match your "box" theme
   const RANGE_BOX = {
-    padX: 2,                 // ~0.08em at normal sizes
+    padX: 2,
     padY: 2,
     radius: 4,
     border: "2px solid #000",
-    background: "rgba(255,255,0,.30)",
-    zIndex: 1198
+    background: "rgba(255,255,0,.20)",
+    zIndex: 800
   };
 
-  // ------------------------------------------------------------
-  // helpers
-  function isRangeMode(){ return Array.isArray(ST.ranges) && ST.ranges.length; }
+  // ---------- helpers ----------
+  const isRangeMode = () => Array.isArray(ST.ranges) && ST.ranges.length;
 
-  function currentPageRect() {
-    // Try to find the .page.facsimile that contains the active range
+  function currentPageEl() {
     const r = ST.currentRange;
     let el = r ? (r.commonAncestorContainer?.nodeType === 1
                     ? r.commonAncestorContainer
@@ -37,15 +38,17 @@
     while (el && !(el.classList?.contains("page") && el.classList?.contains("facsimile"))) {
       el = el.parentElement;
     }
-    const rc = (el || document.querySelector(".page.facsimile.current") || document.body)
-                .getBoundingClientRect();
-    return rc;
+    return el || document.querySelector(".page.facsimile.current") || null;
   }
 
+  function currentPageRect() {
+    const el = currentPageEl();
+    return el ? el.getBoundingClientRect() : { left:0, top:0, width:0, height:0 };
+  }
+
+  // ---------- VEIL (fixed SVG, clipped to page box, z-index below topbar) ----------
   function svgEl(n){ return document.createElementNS("http://www.w3.org/2000/svg", n); }
 
-  // ------------------------------------------------------------
-  // White veil (SVG, fixed, clipped to page rect)
   function ensureVeil() {
     if (ST.veilSvg) return ST.veilSvg;
 
@@ -54,7 +57,7 @@
     Object.assign(svg.style, {
       position: "fixed",
       left: "0", top: "0",
-      width: "0", height: "0",    // sized each frame to the page rect
+      width: "0", height: "0",
       pointerEvents: "none",
       zIndex: String(S.veil.zIndex)
     });
@@ -63,12 +66,13 @@
     const mask = svgEl("mask");
     mask.id = "sstep-veil-mask";
 
-    const base = svgEl("rect");     // white = veil covers area
+    const base = svgEl("rect"); // white = veil is visible
     base.setAttribute("fill", "white");
     mask.appendChild(base);
-    defs.appendChild(mask); svg.appendChild(defs);
+    defs.appendChild(mask);
+    svg.appendChild(defs);
 
-    const dim = svgEl("rect");      // the white veil
+    const dim = svgEl("rect");  // white veil that will have holes cut out
     dim.setAttribute("fill", S.veil.color);
     dim.setAttribute("opacity", String(S.veil.opacity));
     dim.setAttribute("mask", "url(#sstep-veil-mask)");
@@ -87,7 +91,8 @@
     const page = currentPageRect();
     const svg = ensureVeil();
     svg.style.display = "block";
-    // Position & size the SVG to the page box (fixed to viewport)
+
+    // Position the SVG to exactly cover the page box (viewport coords)
     Object.assign(svg.style, {
       left: page.left + "px",
       top:  page.top  + "px",
@@ -95,7 +100,7 @@
       height: page.height + "px"
     });
 
-    // Resize the mask + dim to the page box (local coordinates)
+    // Resize its content to local page coords
     ST.veilBase.setAttribute("x", "0");
     ST.veilBase.setAttribute("y", "0");
     ST.veilBase.setAttribute("width",  String(page.width));
@@ -107,22 +112,17 @@
     ST.veilDim.setAttribute("fill",    S.veil.color);
     ST.veilDim.setAttribute("opacity", String(S.veil.opacity));
 
-    // Clear old holes (keep base)
+    // Clear previous holes (keep base)
     while (ST.veilMask.childNodes.length > 1) ST.veilMask.removeChild(ST.veilMask.lastChild);
 
     const pad = S.veil.pad, rxy = S.veil.radius;
     for (const rc of rects) {
-      // convert viewport rect -> page-local rect
-      const x = Math.max(0, rc.left - page.left - pad);
-      const y = Math.max(0, rc.top  - page.top  - pad);
-      const w = Math.max(0, rc.width  + pad*2);
-      const h = Math.max(0, rc.height + pad*2);
-
       const hole = svgEl("rect");
-      hole.setAttribute("x", String(x));
-      hole.setAttribute("y", String(y));
-      hole.setAttribute("width",  String(w));
-      hole.setAttribute("height", String(h));
+      // convert viewport rect -> page-local rect
+      hole.setAttribute("x", String(Math.max(0, rc.left - page.left - pad)));
+      hole.setAttribute("y", String(Math.max(0, rc.top  - page.top  - pad)));
+      hole.setAttribute("width",  String(Math.max(0, rc.width  + pad*2)));
+      hole.setAttribute("height", String(Math.max(0, rc.height + pad*2)));
       hole.setAttribute("rx", String(rxy));
       hole.setAttribute("ry", String(rxy));
       hole.setAttribute("fill", "black"); // black = cut hole
@@ -130,40 +130,50 @@
     }
   }
 
-  // ------------------------------------------------------------
-  // Yellow range boxes (fixed, clipped to page rect, above veil, below toolbar)
-  function ensureRangeOverlay() {
-    if (ST.rangeOverlay) return ST.rangeOverlay;
-    const el = document.createElement("div");
-    el.id = "sstep-range-overlay";
-    Object.assign(el.style, {
-      position: "fixed",
-      left: "0", top: "0",
-      width: "0", height: "0",
-      pointerEvents: "none",
-      zIndex: String(RANGE_BOX.zIndex)
+  // ---------- YELLOW BOXES UNDER THE TEXT LAYER ----------
+  function ensureUnderlay(pageEl) {
+    if (!pageEl) return null;
+
+    // ensure page is a stacking context we control
+    pageEl.style.position = pageEl.style.position || "relative";
+
+    // get/insert an underlay just beneath the text layer
+    let under = pageEl.querySelector(":scope > .sstep-range-underlay");
+    if (!under) {
+      under = document.createElement("div");
+      under.className = "sstep-range-underlay";
+      Object.assign(under.style, {
+        position: "absolute",
+        inset: "0",
+        pointerEvents: "none",
+        zIndex: "2" // gfx(0) < under(2) < text(3)
+      });
+
+      const textLayer = pageEl.querySelector(":scope > .textLayer");
+      if (textLayer && textLayer.parentNode) {
+        textLayer.style.zIndex = "3"; // make sure text is above our underlay
+        pageEl.insertBefore(under, textLayer);
+      } else {
+        pageEl.appendChild(under);
+      }
+    }
+
+    // hide/clear any other page underlays
+    document.querySelectorAll(".sstep-range-underlay").forEach(u => {
+      if (u !== under) { u.replaceChildren(); u.style.display = "none"; }
     });
-    document.body.appendChild(el);
-    ST.rangeOverlay = el;
-    return el;
+    under.style.display = "block";
+    return under;
   }
 
-  function clearRangeOverlay(){ if (ST.rangeOverlay) ST.rangeOverlay.replaceChildren(); }
+  function drawRangeBoxesUnderText(rects) {
+    const pageEl = currentPageEl();
+    if (!pageEl) return;
+    const page = pageEl.getBoundingClientRect();
+    const under = ensureUnderlay(pageEl);
+    if (!under) return;
 
-  function drawRangeBoxes(rects) {
-    clearRangeOverlay();
-    if (!rects?.length) return;
-
-    const page = currentPageRect();
-    const ov = ensureRangeOverlay();
-    // Clip overlay to the page area by sizing/positioning it to the page box
-    Object.assign(ov.style, {
-      left: page.left + "px",
-      top:  page.top  + "px",
-      width:  page.width  + "px",
-      height: page.height + "px"
-    });
-
+    under.replaceChildren();
     for (const rc of rects) {
       const d = document.createElement("div");
       const left = (rc.left - page.left) - RANGE_BOX.padX;
@@ -180,36 +190,28 @@
         border: RANGE_BOX.border,
         background: RANGE_BOX.background
       });
-      ov.appendChild(d);
+      under.appendChild(d);
     }
   }
 
-  // ------------------------------------------------------------
-  // Hook into the existing overlay update (HTML highlight stays intact)
+  // ---------- hook into the existing overlay update ----------
   const origUpdate = S.updateGradientOverlay?.bind(S);
   S.updateGradientOverlay = function() {
-    // Let the original overlay run first (HTML modes, themes, etc.)
+    // Run your original HTML overlay logic first (unchanged for non-PDF pages)
     origUpdate && origUpdate();
 
-    if (!isRangeMode()) {
+    if (!isRangeMode() || !ST.currentRange?.getClientRects) {
       hideVeil();
-      clearRangeOverlay();
+      const els = document.querySelectorAll(".sstep-range-underlay");
+      els.forEach(el => el.replaceChildren());
       return;
     }
-    const r = ST.currentRange;
-    if (!r || !r.getClientRects) {
-      hideVeil();
-      clearRangeOverlay();
-      return;
-    }
-    const rects = Array.from(r.getClientRects());
-
-    // Update the PDF-only layers
-    updateVeil(rects);
-    drawRangeBoxes(rects);
+    const rects = Array.from(ST.currentRange.getClientRects());
+    updateVeil(rects);                 // white veil (under topbar/toolbar)
+    drawRangeBoxesUnderText(rects);    // yellow boxes beneath text
   };
 
-  // Keep overlays aligned with the viewport
+  // Keep in sync with scroll/resize
   const req = () => S.updateGradientOverlay && S.updateGradientOverlay();
   window.addEventListener("scroll",  req, { passive: true });
   window.addEventListener("resize",  req);

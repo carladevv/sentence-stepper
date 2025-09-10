@@ -46,8 +46,8 @@
         // Keyboard: plain arrows = page nav; Alt+arrows = SStep (handled by addon)
         window.addEventListener("keydown", e => {
             if (e.altKey) return;
-            if (e.key === "ArrowLeft") { e.preventDefault(); showPage(current - 1); }
-            if (e.key === "ArrowRight") { e.preventDefault(); showPage(current + 1); }
+            if (e.key === "ArrowLeft") { e.preventDefault(); showPage(current - 1); if (window.SStep?.reindexPDF) window.SStep.reindexPDF();}
+            if (e.key === "ArrowRight") { e.preventDefault(); showPage(current + 1); if (window.SStep?.reindexPDF) window.SStep.reindexPDF();}
         });
 
         // Theme toggle
@@ -64,6 +64,7 @@
             if (e.key !== "Enter") return;
             const n = parseInt(elJump.value, 10);
             if (Number.isFinite(n)) showPage(n);
+            if (window.SStep?.reindexPDF) window.SStep.reindexPDF();
             elJump.select();
         });
 
@@ -149,6 +150,7 @@
             const saved = parseInt(localStorage.getItem(PAGE_KEY) || "1", 10);
             const target = Number.isFinite(saved) ? saved : 1;
             showPage(Math.min(Math.max(target, 1), pages.length), false);
+            if (window.SStep?.reindexPDF) window.SStep.reindexPDF();
         } catch (err) {
             console.error("[viewer] buildPagesFromPdf ERROR:", err);
             setStatus(`Error building pages: ${err?.message || err}`, true);
@@ -207,6 +209,7 @@
             origNext();
             if (ST.current === before && Array.isArray(ST.sentences) && before >= ST.sentences.length - 1) {
                 if (current < pages.length) showPage(current + 1, false);
+                if (window.SStep?.reindexPDF) window.SStep.reindexPDF();
             }
         };
 
@@ -216,6 +219,7 @@
             if (ST.current === before && before <= 0) {
                 if (current > 1) {
                     showPage(current - 1, false);
+                    if (window.SStep?.reindexPDF) window.SStep.reindexPDF();
                     // jump to last sentence on the new page
                     try {
                         const ST2 = S.state;
