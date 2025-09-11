@@ -12,6 +12,7 @@
   };
 
   let barEl = null, posBtn = null, posIcon = null, posPop = null;
+  let customBtn = null, customPop = null;
 
   // cross-browser runtime.getURL
   const RT = (typeof browser !== "undefined" ? browser : chrome);
@@ -20,9 +21,9 @@
   function isBottom(mode) {
     return mode && mode.startsWith("b"); // bl, bc, br
   }
-  function updatePopoverDirection(mode) {
-    if (!posPop) return;
-    posPop.classList.toggle("flip-up", isBottom(mode));
+  function updateFlipFor(pop, mode) {
+    if (!pop) return;
+    pop.classList.toggle("flip-up", isBottom(mode));
   }
 
   function loadPos() {
@@ -36,7 +37,9 @@
     if (!barEl) return;
     barEl.classList.remove("sstep-pos-tl", "sstep-pos-tr", "sstep-pos-bl", "sstep-pos-br", "sstep-pos-tc", "sstep-pos-bc");
     barEl.classList.add("sstep-pos-" + mode);
-    updatePopoverDirection(mode);
+    // flip both popovers appropriately
+    updateFlipFor(posPop, mode);
+    updateFlipFor(customPop, mode);
   }
 
   function iconFor(mode) { return extURL(`pos-icons/pos-${mode}.png`); }
@@ -74,9 +77,17 @@
 
   function wireOutsideClose() {
     document.addEventListener("mousedown", (e) => {
-      if (!posPop || posPop.hidden) return;
-      if (!posPop.contains(e.target) && !posBtn.contains(e.target)) {
-        posPop.hidden = true;
+      // Position popover
+      if (posPop && !posPop.hidden) {
+        if (!posPop.contains(e.target) && !posBtn.contains(e.target)) {
+          posPop.hidden = true;
+        }
+      }
+      // Customization popover
+      if (customPop && !customPop.hidden) {
+        if (!customPop.contains(e.target) && !customBtn.contains(e.target)) {
+          customPop.hidden = true;
+        }
       }
     }, true);
   }
@@ -117,17 +128,18 @@
         <option value="hy">Armenian (։)</option>
       </select>
 
+      <!-- Customization popover button + popover -->
+      <button class="btn iconbtn" id="sstep-customize-btn" title="Customize" aria-expanded="false">
+        <img id="sstep-gear-icon" alt="Customize">
+      </button>
+      <div class="custom-popover" id="sstep-custom-pop" hidden></div>
+
       <!-- Position button + popover -->
       <button class="btn iconbtn" id="sstep-pos-btn" title="Toolbar position">
         <img id="sstep-pos-icon" alt="" />
       </button>
       <div class="pos-popover" id="sstep-pos-pop" hidden></div>
-
-      <!-- Customization panel button -->
-      <button class="btn iconbtn" id="sstep-customize-btn" title="Customize (panel)" aria-haspopup="dialog" aria-expanded="false">
-        <img id="sstep-gear-icon" alt="Customize">
-      </button>
-
+      
       <!-- Ko-fi button -->
       <a class="btn iconbtn" id="sstep-kofi" href="https://ko-fi.com/Z8Z61KT5MM" target="_blank" rel="noopener noreferrer" title="Support on Ko-fi">
         <img id="sstep-kofi-icon" alt="" />
@@ -158,12 +170,12 @@
       langSel.onchange = () => S.setLanguage && S.setLanguage(langSel.value);
     }
 
-    // position UI
+    // --- Position UI
     posBtn = document.getElementById("sstep-pos-btn");
     posIcon = document.getElementById("sstep-pos-icon");
     posPop = document.getElementById("sstep-pos-pop");
 
-    const current = loadPos();
+    let current = loadPos();
     applyPos(current);
     setPosButton(current);
     buildPositionPopover(current);
@@ -171,31 +183,63 @@
 
     if (posBtn) {
       posBtn.onclick = () => {
-        const cur = loadPos();
-        buildPositionPopover(cur);
-        updatePopoverDirection(cur);
+        current = loadPos();
+        buildPositionPopover(current);
+        updateFlipFor(posPop, current);
         posPop.hidden = !posPop.hidden;
+        if (!posPop.hidden) { customPop && (customPop.hidden = true); } // close other popover
       };
     }
 
-    // customization panel (delegates to S.Panel)
-    const gearBtn = barEl.querySelector("#sstep-customize-btn");
+    // --- Customization popover (delegates to S.renderPanelOptions)
+    customBtn = barEl.querySelector("#sstep-customize-btn");
     const gearIcon = barEl.querySelector("#sstep-gear-icon");
+    customPop = barEl.querySelector("#sstep-custom-pop");
+
     if (gearIcon) {
       gearIcon.src = extURL("other-icons/gear.png");
       gearIcon.style.width = "18px";
       gearIcon.style.height = "18px";
       gearIcon.style.display = "block";
     }
-    if (gearBtn) {
-      gearBtn.addEventListener("click", () => {
-        if (!window.SStep.Panel) return;   // safe if files load out of order
-        window.SStep.Panel.ensure();       // ensure shell exists
-        window.SStep.Panel.toggle();       // open/close
+
+    if (customBtn && customPop) {
+      // initial render of options (placeholder or real)
+      if (typeof S.renderPanelOptions === "function") {
+        S.renderPanelOptions(customPop);
+      } else {
+        customPop.innerHTML = `
+          <div class="section-title">Appearance</div>
+          <div class="sstep-field">
+            <label>Theme</label>
+            <div class="sstep-row"><em>Theme + custom colors will go here.</em></div>
+          </div>
+          <div class="section-title">Behavior</div>
+          <div class="sstep-field">
+            <label>Modes</label>
+            <div class="sstep-row"><em>Sentences / Group / Paragraph selector goes here.</em></div>
+          </div>
+          <div class="section-title">Shortcuts</div>
+          <div class="sstep-field">
+            <label>Hotkeys</label>
+            <div class="sstep-row"><em>Custom hotkeys editor will live here.</em></div>
+          </div>
+        `;
+      }
+
+      // toggle open/close with flip according to toolbar position
+      customBtn.addEventListener("click", () => {
+        current = loadPos();
+        updateFlipFor(customPop, current);
+        const willOpen = !!customPop.hidden;
+        // close the other popover
+        posPop && (posPop.hidden = true);
+        customPop.hidden = !willOpen ? true : false;
+        customBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
       });
     }
 
-    // Ko-fi icon
+    // --- Ko-fi icon
     const kofiIcon = document.getElementById("sstep-kofi-icon");
     if (kofiIcon) {
       kofiIcon.src = extURL("other-icons/kofi.png");
