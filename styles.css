@@ -162,4 +162,11 @@
   margin-bottom: 8px;
 }
 
+/* If a sentence contains nested .sstep-sentence, keep text fully visible */
+.sstep-current,
+.sstep-current .sstep-sentence {
+  opacity: 1 !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
 

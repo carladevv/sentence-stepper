@@ -28,7 +28,7 @@
     catch { return DEFAULT_POS; }
   }
   function savePos(mode) {
-    try { localStorage.setItem(POS_KEY, mode); } catch {}
+    try { localStorage.setItem(POS_KEY, mode); } catch { }
   }
   function applyPos(mode) {
     if (!barEl) return;
@@ -94,74 +94,62 @@
     barEl.className = "sstep-toolbar";
 
     barEl.innerHTML = `
-      <span class="brand">Sentence-Stepper</span>
-      <button class="btn hide-when-compact" id="sstep-prev" title="Alt+Left">Prev</button>
-      <button class="btn hide-when-compact" id="sstep-next" title="Alt+Right">Next</button>
+    <span class="brand">Sentence-Stepper</span>
+    <button class="btn hide-when-compact" id="sstep-prev" title="Alt+Left">Prev</button>
+    <button class="btn hide-when-compact" id="sstep-next" title="Alt+Right">Next</button>
 
-      <select class="select hide-when-compact" id="sstep-theme" title="Highlight theme">
-        <option value="box">Box</option>
-        <option value="underline">Underline</option>
-        <option value="none">No highlight</option>
-        <option value="gradient-line">Line gradient (bg)</option>
-        <option value="gradient-span">Sentence gradient (bg)</option>
-        <option value="gradient-text-span">Sentence gradient (text)</option>
-      </select>
+    <select class="select hide-when-compact" id="sstep-theme" title="Highlight theme">
+      <option value="box">Box</option>
+      <option value="underline">Underline</option>
+      <option value="none">No highlight</option>
+      <option value="gradient-line">Line gradient (bg)</option>
+      <option value="gradient-span">Sentence gradient (bg)</option>
+      <option value="gradient-text-span">Sentence gradient (text)</option>
+    </select>
 
-      <select class="select hide-when-compact" id="sstep-lang" title="Sentence language">
-        <option value="auto">Language: Auto</option>
-        <option value="en">English (abbr.-aware)</option>
-        <option value="zh">Chinese (。！？)</option>
-        <option value="ja">Japanese (。！？)</option>
-        <option value="hi">Indic (। ॥)</option>
-        <option value="ur">Urdu/Arabic (۔ ؟)</option>
-        <option value="my">Burmese (။)</option>
-        <option value="km">Khmer (។ ៕)</option>
-        <option value="bo">Tibetan (། ༎)</option>
-        <option value="hy">Armenian (։)</option>
-      </select>
+    <select class="select hide-when-compact" id="sstep-lang" title="Sentence language">
+      <option value="auto">Language: Auto</option>
+      <option value="en">English (abbr.-aware)</option>
+      <option value="zh">Chinese (。)</option>
+      <option value="ja">Japanese (。)</option>
+      <option value="hi">Indic (। ॥)</option>
+      <option value="ur">Urdu/Arabic (۔ ؟)</option>
+      <option value="my">Burmese (။)</option>
+      <option value="km">Khmer (។ ៕)</option>
+      <option value="bo">Tibetan (། ༎)</option>
+      <option value="hy">Armenian (։)</option>
+    </select>
 
-      <!-- Position button + popover -->
-      <button class="btn iconbtn hide-when-compact" id="sstep-pos-btn" title="Toolbar position">
-        <img id="sstep-pos-icon" alt="" />
-      </button>
-      <div class="pos-popover hide-when-compact" id="sstep-pos-pop" hidden></div>
+    <!-- Position button + popover -->
+    <button class="btn iconbtn hide-when-compact" id="sstep-pos-btn" title="Toolbar position">
+      <img id="sstep-pos-icon" alt="" />
+    </button>
+    <div class="pos-popover hide-when-compact" id="sstep-pos-pop" hidden></div>
 
-      <button class="btn" id="sstep-toggle" title="Toggle effect">On</button>
-    `; // NOTE: initial label is "On" because clicking turns it on.
+    <!-- Ko-fi button (replaces the old On/Off) -->
+    <a class="btn iconbtn" id="sstep-kofi" href="https://ko-fi.com/Z8Z61KT5MM" target="_blank" rel="noopener noreferrer" title="Support on Ko-fi">
+      <img id="sstep-kofi-icon" alt="" />
+    </a>
+  `;
 
     document.documentElement.appendChild(barEl);
 
-    // wire
+    // wire core buttons
     document.getElementById("sstep-prev").onclick = () => S.prev();
     document.getElementById("sstep-next").onclick = () => S.next();
 
-    ST.toggleBtn = document.getElementById("sstep-toggle");
-    ST.toggleBtn.onclick = () => {
-      if (ST.enabled) {
-        S.removeEffect(true);
-        S.setToolbarCompact(true);
-        try { localStorage.setItem("sstep-enabled", "false"); } catch {}
-      } else {
-        if (ST.sentences.length && document.querySelector(".sstep-sentence")) {
-          ST.enabled = true; S.attachKeys(); S.focusIndex(ST.current); ST.toggleBtn.textContent = "Off";
-        } else {
-          S.applyEffect();
-        }
-        S.setToolbarCompact(false);
-        try { localStorage.setItem("sstep-enabled", "true"); } catch {}
-      }
-    };
-
+    // theme
     const themeSel = document.getElementById("sstep-theme");
     const savedTheme = (() => { try { return localStorage.getItem("sstep-theme"); } catch { return null; } })() || "box";
     themeSel.value = savedTheme; S.setTheme(savedTheme);
     themeSel.onchange = () => S.setTheme(themeSel.value);
 
+    // language
     const langSel = document.getElementById("sstep-lang");
     langSel.value = S.langKey;
     langSel.onchange = () => S.setLanguage(langSel.value);
 
-    // Position UI
+    // position UI
     posBtn = document.getElementById("sstep-pos-btn");
     posIcon = document.getElementById("sstep-pos-icon");
     posPop = document.getElementById("sstep-pos-pop");
@@ -179,7 +167,19 @@
       posPop.hidden = !posPop.hidden;
     };
 
+    // Ko-fi icon
+    const kofiIcon = document.getElementById("sstep-kofi-icon");
+    if (kofiIcon) {
+      kofiIcon.src = (typeof browser !== "undefined" ? browser : chrome)?.runtime?.getURL
+        ? (typeof browser !== "undefined" ? browser : chrome).runtime.getURL("other-icons/kofi.png")
+        : "other-icons/kofi.png";
+      kofiIcon.style.width = "18px";
+      kofiIcon.style.height = "18px";
+      kofiIcon.style.display = "block"
+    }
+
     // initial compact state follows ST.enabled (main sets this)
     S.setToolbarCompact(!ST.enabled);
   };
+
 })();

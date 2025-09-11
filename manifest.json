@@ -14,7 +14,7 @@
   },
 
   "web_accessible_resources": [{
-    "resources": ["pos-icons/*"],
+    "resources": ["pos-icons/*","other-icons/*"],
     "matches": ["<all_urls>"]
   }],
 
