@@ -1,7 +1,9 @@
+// 05-toolbar.js
 (() => {
   const S = (window.SStep = window.SStep || {});
-  const ST = S.state;
+  const ST = S.state || (S.state = { sentences: [], current: 0, enabled: false });
 
+  // ---- position handling ----------------------------------------------------
   const POS_KEY = "sstep-pos-mode";
   const DEFAULT_POS = "tr"; // tl, tr, bl, br, tc, bc
   const POS_LABELS = {
@@ -28,7 +30,7 @@
     catch { return DEFAULT_POS; }
   }
   function savePos(mode) {
-    try { localStorage.setItem(POS_KEY, mode); } catch { }
+    try { localStorage.setItem(POS_KEY, mode); } catch { /* ignore */ }
   }
   function applyPos(mode) {
     if (!barEl) return;
@@ -45,15 +47,8 @@
     posBtn.title = POS_LABELS[mode] || mode;
   }
 
-  // compact API used by main.js
-  S.setToolbarCompact = function setToolbarCompact(isCompact) {
-    if (!barEl) return;
-    barEl.classList.toggle("compact", !!isCompact);
-    // close popover if compacted
-    if (posPop) posPop.hidden = true;
-  };
-
   function buildPositionPopover(currentMode) {
+    if (!posPop) return;
     posPop.replaceChildren();
     const modes = ["tl", "tc", "tr", "bl", "bc", "br"];
     for (const m of modes) {
@@ -86,6 +81,7 @@
     }, true);
   }
 
+  // ---- public: add the toolbar ---------------------------------------------
   S.addToolbar = function addToolbar() {
     if (document.getElementById("sstep-toolbar")) return;
 
@@ -94,60 +90,73 @@
     barEl.className = "sstep-toolbar";
 
     barEl.innerHTML = `
-    <span class="brand">Sentence-Stepper</span>
-    <button class="btn hide-when-compact" id="sstep-prev" title="Alt+Left">Prev</button>
-    <button class="btn hide-when-compact" id="sstep-next" title="Alt+Right">Next</button>
+      <span class="brand">Sentence-Stepper</span>
 
-    <select class="select hide-when-compact" id="sstep-theme" title="Highlight theme">
-      <option value="box">Box</option>
-      <option value="underline">Underline</option>
-      <option value="none">No highlight</option>
-      <option value="gradient-line">Line gradient (bg)</option>
-      <option value="gradient-span">Sentence gradient (bg)</option>
-      <option value="gradient-text-span">Sentence gradient (text)</option>
-    </select>
+      <button class="btn" id="sstep-prev" title="Alt+Left">Prev</button>
+      <button class="btn" id="sstep-next" title="Alt+Right">Next</button>
 
-    <select class="select hide-when-compact" id="sstep-lang" title="Sentence language">
-      <option value="auto">Language: Auto</option>
-      <option value="en">English (abbr.-aware)</option>
-      <option value="zh">Chinese (。)</option>
-      <option value="ja">Japanese (。)</option>
-      <option value="hi">Indic (। ॥)</option>
-      <option value="ur">Urdu/Arabic (۔ ؟)</option>
-      <option value="my">Burmese (။)</option>
-      <option value="km">Khmer (។ ៕)</option>
-      <option value="bo">Tibetan (། ༎)</option>
-      <option value="hy">Armenian (։)</option>
-    </select>
+      <select class="select" id="sstep-theme" title="Highlight theme">
+        <option value="box">Box</option>
+        <option value="underline">Underline</option>
+        <option value="none">No highlight</option>
+        <option value="gradient-line">Line gradient (bg)</option>
+        <option value="gradient-span">Sentence gradient (bg)</option>
+        <option value="gradient-text-span">Sentence gradient (text)</option>
+      </select>
 
-    <!-- Position button + popover -->
-    <button class="btn iconbtn hide-when-compact" id="sstep-pos-btn" title="Toolbar position">
-      <img id="sstep-pos-icon" alt="" />
-    </button>
-    <div class="pos-popover hide-when-compact" id="sstep-pos-pop" hidden></div>
+      <select class="select" id="sstep-lang" title="Sentence language">
+        <option value="auto">Language: Auto</option>
+        <option value="en">English (abbr.-aware)</option>
+        <option value="zh">Chinese (。)</option>
+        <option value="ja">Japanese (。)</option>
+        <option value="hi">Indic (। ॥)</option>
+        <option value="ur">Urdu/Arabic (۔ ؟)</option>
+        <option value="my">Burmese (။)</option>
+        <option value="km">Khmer (។ ៕)</option>
+        <option value="bo">Tibetan (། ༎)</option>
+        <option value="hy">Armenian (։)</option>
+      </select>
 
-    <!-- Ko-fi button (replaces the old On/Off) -->
-    <a class="btn iconbtn" id="sstep-kofi" href="https://ko-fi.com/Z8Z61KT5MM" target="_blank" rel="noopener noreferrer" title="Support on Ko-fi">
-      <img id="sstep-kofi-icon" alt="" />
-    </a>
-  `;
+      <!-- Position button + popover -->
+      <button class="btn iconbtn" id="sstep-pos-btn" title="Toolbar position">
+        <img id="sstep-pos-icon" alt="" />
+      </button>
+      <div class="pos-popover" id="sstep-pos-pop" hidden></div>
+
+      <!-- Customization panel button -->
+      <button class="btn iconbtn" id="sstep-customize-btn" title="Customize (panel)" aria-haspopup="dialog" aria-expanded="false">
+        <img id="sstep-gear-icon" alt="Customize">
+      </button>
+
+      <!-- Ko-fi button -->
+      <a class="btn iconbtn" id="sstep-kofi" href="https://ko-fi.com/Z8Z61KT5MM" target="_blank" rel="noopener noreferrer" title="Support on Ko-fi">
+        <img id="sstep-kofi-icon" alt="" />
+      </a>
+    `;
 
     document.documentElement.appendChild(barEl);
 
     // wire core buttons
-    document.getElementById("sstep-prev").onclick = () => S.prev();
-    document.getElementById("sstep-next").onclick = () => S.next();
+    const prevBtn = document.getElementById("sstep-prev");
+    const nextBtn = document.getElementById("sstep-next");
+    if (prevBtn) prevBtn.onclick = () => S.prev && S.prev();
+    if (nextBtn) nextBtn.onclick = () => S.next && S.next();
 
     // theme
     const themeSel = document.getElementById("sstep-theme");
     const savedTheme = (() => { try { return localStorage.getItem("sstep-theme"); } catch { return null; } })() || "box";
-    themeSel.value = savedTheme; S.setTheme(savedTheme);
-    themeSel.onchange = () => S.setTheme(themeSel.value);
+    if (themeSel) {
+      themeSel.value = savedTheme;
+      if (S.setTheme) S.setTheme(savedTheme);
+      themeSel.onchange = () => S.setTheme && S.setTheme(themeSel.value);
+    }
 
     // language
     const langSel = document.getElementById("sstep-lang");
-    langSel.value = S.langKey;
-    langSel.onchange = () => S.setLanguage(langSel.value);
+    if (langSel) {
+      langSel.value = S.langKey || "auto";
+      langSel.onchange = () => S.setLanguage && S.setLanguage(langSel.value);
+    }
 
     // position UI
     posBtn = document.getElementById("sstep-pos-btn");
@@ -160,26 +169,39 @@
     buildPositionPopover(current);
     wireOutsideClose();
 
-    posBtn.onclick = () => {
-      const cur = loadPos();
-      buildPositionPopover(cur);
-      updatePopoverDirection(cur);
-      posPop.hidden = !posPop.hidden;
-    };
+    if (posBtn) {
+      posBtn.onclick = () => {
+        const cur = loadPos();
+        buildPositionPopover(cur);
+        updatePopoverDirection(cur);
+        posPop.hidden = !posPop.hidden;
+      };
+    }
+
+    // customization panel (delegates to S.Panel)
+    const gearBtn = barEl.querySelector("#sstep-customize-btn");
+    const gearIcon = barEl.querySelector("#sstep-gear-icon");
+    if (gearIcon) {
+      gearIcon.src = extURL("other-icons/gear.png");
+      gearIcon.style.width = "18px";
+      gearIcon.style.height = "18px";
+      gearIcon.style.display = "block";
+    }
+    if (gearBtn) {
+      gearBtn.addEventListener("click", () => {
+        if (!window.SStep.Panel) return;   // safe if files load out of order
+        window.SStep.Panel.ensure();       // ensure shell exists
+        window.SStep.Panel.toggle();       // open/close
+      });
+    }
 
     // Ko-fi icon
     const kofiIcon = document.getElementById("sstep-kofi-icon");
     if (kofiIcon) {
-      kofiIcon.src = (typeof browser !== "undefined" ? browser : chrome)?.runtime?.getURL
-        ? (typeof browser !== "undefined" ? browser : chrome).runtime.getURL("other-icons/kofi.png")
-        : "other-icons/kofi.png";
+      kofiIcon.src = extURL("other-icons/kofi.png");
       kofiIcon.style.width = "18px";
       kofiIcon.style.height = "18px";
-      kofiIcon.style.display = "block"
+      kofiIcon.style.display = "block";
     }
-
-    // initial compact state follows ST.enabled (main sets this)
-    S.setToolbarCompact(!ST.enabled);
   };
-
 })();

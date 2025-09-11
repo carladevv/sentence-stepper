@@ -177,7 +177,6 @@ S.buildSpansIfNeeded = function buildSpansIfNeeded() {
     S.attachKeys();
     S.enableClickToJump(S.rootEl || document.body);
     S.focusIndex(ST.current, { scroll: true });
-    if (S.setToolbarCompact) S.setToolbarCompact(false);
   };
 
   S.removeEffect = function(keepPlace = true) {
@@ -196,7 +195,6 @@ S.buildSpansIfNeeded = function buildSpansIfNeeded() {
       ST.lastTextPaintIndex = -1;
     }
     if (!keepPlace) ST.current = 0;
-    if (S.setToolbarCompact) S.setToolbarCompact(true);
   };
 
   S.unwrapAllSpans = function() {
@@ -243,8 +241,5 @@ S.buildSpansIfNeeded = function buildSpansIfNeeded() {
   const schedule = () => S.scheduleOverlayUpdate && S.scheduleOverlayUpdate();
   window.addEventListener("scroll", schedule, { passive: true });
   window.addEventListener("resize", schedule);
-
-  // Build toolbar always; do NOT auto-enable (background icon toggles on/off)
   S.addToolbar && S.addToolbar();
-  if (S.setToolbarCompact) S.setToolbarCompact(true);
 })();

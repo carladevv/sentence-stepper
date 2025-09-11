@@ -1,6 +1,6 @@
 (() => {
   const S = (window.SStep = window.SStep || {});
-  S.state = S.state || { sentences: [], current: 0, enabled: false, toggleBtn: null, overlayEl: null, overlayRaf: 0, lastTextPaintIndex: -1 };
+  S.state = S.state || { sentences: [], current: 0, enabled: false, overlayEl: null, overlayRaf: 0, lastTextPaintIndex: -1 };
 
   S.escapeForCharClass = function (s) {
     return s.replace(/[-\\^\]]/g, "\\$&");

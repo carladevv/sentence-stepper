@@ -51,7 +51,9 @@ chrome.action.onClicked.addListener(async (tab) => {
     "sstep/03-dom.js",
     "sstep/04-overlay.js",
     "sstep/05-toolbar.js",
-    "sstep/06-main.js"
+    "sstep/06-panel.js",
+    "sstep/07-panel-options.js",
+    "sstep/08-main.js"
   ];
 
   for (const f of files) {
