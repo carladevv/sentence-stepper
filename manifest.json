@@ -3,7 +3,7 @@
   "name": "Sentence Stepper",
   "version": "0.2.0",
   "description": "Step through page text sentence by sentence.",
-  "permissions": ["scripting", "activeTab"],
+  "permissions": ["scripting", "activeTab", "storage"],
   "action": { "default_title": "Sentence Stepper" },
   "background": { "service_worker": "background.js" },
 

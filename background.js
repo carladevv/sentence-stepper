@@ -1,5 +1,4 @@
 // background.js — MV3 service worker
-
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab || !tab.id || !/^https?:/i.test(tab.url || "")) return;
 
@@ -28,24 +27,23 @@ chrome.action.onClicked.addListener(async (tab) => {
       }
     });
     toggle = res && res.result;
-  } catch (e) {
-    // ignore; we'll inject below
-  }
+  } catch (e) {}
 
   if (toggle && (toggle.state === "turned-off" || toggle.state === "turned-on")) {
-    return; // already toggled, done
+    return;
   }
 
   // 2) Not present → inject CSS and scripts in order, then enable
   try {
     await chrome.scripting.insertCSS({
       target: { tabId: tab.id },
-      files: ["styles.css"] // optional; ignore failure if your build doesn’t ship it
+      files: ["styles.css"]
     });
   } catch (e) {}
 
   const files = [
     "Readability.js",
+    "sstep/00-settings.js",   // <-- ADD THIS FIRST
     "sstep/01-utils.js",
     "sstep/02-language.js",
     "sstep/03-dom.js",

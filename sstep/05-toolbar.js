@@ -4,7 +4,6 @@
   const ST = S.state || (S.state = { sentences: [], current: 0, enabled: false });
 
   // ---- position handling ----------------------------------------------------
-  const POS_KEY = "sstep-pos-mode";
   const DEFAULT_POS = "tr"; // tl, tr, bl, br, tc, bc
   const POS_LABELS = {
     tl: "Top-left", tr: "Top-right", tc: "Top-center",
@@ -13,6 +12,9 @@
 
   let barEl = null, posBtn = null, posIcon = null, posPop = null;
   let customBtn = null, customPop = null;
+
+  // keep a local cache for snappy UI
+  let lastKnownPos = DEFAULT_POS;
 
   // cross-browser runtime.getURL
   const RT = (typeof browser !== "undefined" ? browser : chrome);
@@ -26,13 +28,19 @@
     pop.classList.toggle("flip-up", isBottom(mode));
   }
 
-  function loadPos() {
-    try { return localStorage.getItem(POS_KEY) || DEFAULT_POS; }
-    catch { return DEFAULT_POS; }
+  // --- CHANGED: no more localStorage; S.Settings is the source of truth ------
+  async function loadPos() {
+    try {
+      const v = await S.Settings?.get("pos");
+      return v || DEFAULT_POS;
+    } catch {
+      return DEFAULT_POS;
+    }
   }
-  function savePos(mode) {
-    try { localStorage.setItem(POS_KEY, mode); } catch { /* ignore */ }
+  async function savePos(mode) {
+    try { await S.Settings?.set({ pos: mode }); } catch { /* ignore */ }
   }
+
   function applyPos(mode) {
     if (!barEl) return;
     barEl.classList.remove("sstep-pos-tl", "sstep-pos-tr", "sstep-pos-bl", "sstep-pos-br", "sstep-pos-tc", "sstep-pos-bc");
@@ -67,8 +75,11 @@
       img.alt = POS_LABELS[m];
       b.appendChild(img);
       if (m === currentMode) b.classList.add("active");
-      b.onclick = () => {
-        savePos(m); applyPos(m); setPosButton(m);
+      b.onclick = async () => {
+        // write to global storage (propagates to all tabs)
+        await savePos(m);
+        // apply immediately for this tab
+        S.setToolbarPos(m);
         posPop.hidden = true;
       };
       posPop.appendChild(b);
@@ -91,6 +102,14 @@
       }
     }, true);
   }
+
+  // --- NEW: expose a setter used by storage.onChanged for live updates -------
+  S.setToolbarPos = function setToolbarPos(mode = DEFAULT_POS) {
+    lastKnownPos = mode || DEFAULT_POS;
+    applyPos(lastKnownPos);
+    setPosButton(lastKnownPos);
+    buildPositionPopover(lastKnownPos);
+  };
 
   // ---- public: add the toolbar ---------------------------------------------
   S.addToolbar = function addToolbar() {
@@ -154,7 +173,7 @@
     if (prevBtn) prevBtn.onclick = () => S.prev && S.prev();
     if (nextBtn) nextBtn.onclick = () => S.next && S.next();
 
-    // theme
+    // theme (unchanged: still localStorage until we migrate that next)
     const themeSel = document.getElementById("sstep-theme");
     const savedTheme = (() => { try { return localStorage.getItem("sstep-theme"); } catch { return null; } })() || "box";
     if (themeSel) {
@@ -163,7 +182,7 @@
       themeSel.onchange = () => S.setTheme && S.setTheme(themeSel.value);
     }
 
-    // language
+    // language (unchanged: uses S.langKey today)
     const langSel = document.getElementById("sstep-lang");
     if (langSel) {
       langSel.value = S.langKey || "auto";
@@ -175,17 +194,18 @@
     posIcon = document.getElementById("sstep-pos-icon");
     posPop = document.getElementById("sstep-pos-pop");
 
-    let current = loadPos();
-    applyPos(current);
-    setPosButton(current);
-    buildPositionPopover(current);
+    // Start with default, then hydrate from storage
+    S.setToolbarPos(DEFAULT_POS);
+    loadPos().then((v) => S.setToolbarPos(v));
+
     wireOutsideClose();
 
     if (posBtn) {
-      posBtn.onclick = () => {
-        current = loadPos();
-        buildPositionPopover(current);
-        updateFlipFor(posPop, current);
+      posBtn.onclick = async () => {
+        // refresh current in case it changed in another tab
+        lastKnownPos = await loadPos();
+        buildPositionPopover(lastKnownPos);
+        updateFlipFor(posPop, lastKnownPos);
         posPop.hidden = !posPop.hidden;
         if (!posPop.hidden) { customPop && (customPop.hidden = true); } // close other popover
       };
@@ -228,9 +248,9 @@
       }
 
       // toggle open/close with flip according to toolbar position
-      customBtn.addEventListener("click", () => {
-        current = loadPos();
-        updateFlipFor(customPop, current);
+      customBtn.addEventListener("click", async () => {
+        lastKnownPos = await loadPos();
+        updateFlipFor(customPop, lastKnownPos);
         const willOpen = !!customPop.hidden;
         // close the other popover
         posPop && (posPop.hidden = true);
