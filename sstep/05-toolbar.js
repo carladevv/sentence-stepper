@@ -3,7 +3,8 @@
   const S = (window.SStep = window.SStep || {});
   const ST = S.state || (S.state = { sentences: [], current: 0, enabled: false });
 
-  // ---- position handling ----------------------------------------------------
+  // ---- position handling (PER-SITE via page localStorage) -------------------
+  const POS_KEY = "sstep-pos-mode";
   const DEFAULT_POS = "tr"; // tl, tr, bl, br, tc, bc
   const POS_LABELS = {
     tl: "Top-left", tr: "Top-right", tc: "Top-center",
@@ -13,39 +14,20 @@
   let barEl = null, posBtn = null, posIcon = null, posPop = null;
   let customBtn = null, customPop = null;
 
-  // keep a local cache for snappy UI
-  let lastKnownPos = DEFAULT_POS;
-
-  // cross-browser runtime.getURL
   const RT = (typeof browser !== "undefined" ? browser : chrome);
   const extURL = (p) => (RT?.runtime?.getURL ? RT.runtime.getURL(p) : p);
 
-  function isBottom(mode) {
-    return mode && mode.startsWith("b"); // bl, bc, br
-  }
-  function updateFlipFor(pop, mode) {
-    if (!pop) return;
-    pop.classList.toggle("flip-up", isBottom(mode));
-  }
+  function isBottom(mode) { return mode && mode.startsWith("b"); }
+  function updateFlipFor(pop, mode) { if (pop) pop.classList.toggle("flip-up", isBottom(mode)); }
 
-  // --- CHANGED: no more localStorage; S.Settings is the source of truth ------
-  async function loadPos() {
-    try {
-      const v = await S.Settings?.get("pos");
-      return v || DEFAULT_POS;
-    } catch {
-      return DEFAULT_POS;
-    }
-  }
-  async function savePos(mode) {
-    try { await S.Settings?.set({ pos: mode }); } catch { /* ignore */ }
-  }
+  // PER-SITE storage for position
+  function loadPos() { try { return localStorage.getItem(POS_KEY) || DEFAULT_POS; } catch { return DEFAULT_POS; } }
+  function savePos(mode) { try { localStorage.setItem(POS_KEY, mode); } catch {} }
 
   function applyPos(mode) {
     if (!barEl) return;
-    barEl.classList.remove("sstep-pos-tl", "sstep-pos-tr", "sstep-pos-bl", "sstep-pos-br", "sstep-pos-tc", "sstep-pos-bc");
+    barEl.classList.remove("sstep-pos-tl","sstep-pos-tr","sstep-pos-bl","sstep-pos-br","sstep-pos-tc","sstep-pos-bc");
     barEl.classList.add("sstep-pos-" + mode);
-    // flip both popovers appropriately
     updateFlipFor(posPop, mode);
     updateFlipFor(customPop, mode);
   }
@@ -75,41 +57,35 @@
       img.alt = POS_LABELS[m];
       b.appendChild(img);
       if (m === currentMode) b.classList.add("active");
-      b.onclick = async () => {
-        // write to global storage (propagates to all tabs)
-        await savePos(m);
-        // apply immediately for this tab
-        S.setToolbarPos(m);
-        posPop.hidden = true;
-      };
+      b.onclick = () => { savePos(m); applyPos(m); setPosButton(m); posPop.hidden = true; };
       posPop.appendChild(b);
     }
   }
 
   function wireOutsideClose() {
     document.addEventListener("mousedown", (e) => {
-      // Position popover
-      if (posPop && !posPop.hidden) {
-        if (!posPop.contains(e.target) && !posBtn.contains(e.target)) {
-          posPop.hidden = true;
-        }
-      }
-      // Customization popover
-      if (customPop && !customPop.hidden) {
-        if (!customPop.contains(e.target) && !customBtn.contains(e.target)) {
-          customPop.hidden = true;
-        }
-      }
+      if (posPop && !posPop.hidden && !posPop.contains(e.target) && !posBtn.contains(e.target)) posPop.hidden = true;
+      if (customPop && !customPop.hidden && !customPop.contains(e.target) && !customBtn.contains(e.target)) customPop.hidden = true;
     }, true);
   }
 
-  // --- NEW: expose a setter used by storage.onChanged for live updates -------
+  // Expose for completeness
   S.setToolbarPos = function setToolbarPos(mode = DEFAULT_POS) {
-    lastKnownPos = mode || DEFAULT_POS;
-    applyPos(lastKnownPos);
-    setPosButton(lastKnownPos);
-    buildPositionPopover(lastKnownPos);
+    applyPos(mode);
+    setPosButton(mode);
+    buildPositionPopover(mode);
   };
+
+  // Helper to update the transition slider UI if present
+  function syncTransitionControls(ms) {
+    if (!customPop) return;
+    const slider = customPop.querySelector("#sstep-trans-slider");
+    const label  = customPop.querySelector("#sstep-trans-label");
+    if (!slider || !label) return;
+    const secs = Math.round((Number(ms) || 0) / 100) / 10; // ms → 0.1s
+    slider.value = String(secs);
+    label.textContent = `${secs.toFixed(1)}s`;
+  }
 
   // ---- public: add the toolbar ---------------------------------------------
   S.addToolbar = function addToolbar() {
@@ -167,51 +143,53 @@
 
     document.documentElement.appendChild(barEl);
 
-    // wire core buttons
+    // Core navigation
     const prevBtn = document.getElementById("sstep-prev");
     const nextBtn = document.getElementById("sstep-next");
     if (prevBtn) prevBtn.onclick = () => S.prev && S.prev();
     if (nextBtn) nextBtn.onclick = () => S.next && S.next();
 
-    // theme (unchanged: still localStorage until we migrate that next)
+    // THEME: PER-SITE (page localStorage)
     const themeSel = document.getElementById("sstep-theme");
     const savedTheme = (() => { try { return localStorage.getItem("sstep-theme"); } catch { return null; } })() || "box";
     if (themeSel) {
       themeSel.value = savedTheme;
       if (S.setTheme) S.setTheme(savedTheme);
-      themeSel.onchange = () => S.setTheme && S.setTheme(themeSel.value);
+      themeSel.onchange = () => {
+        try { localStorage.setItem("sstep-theme", themeSel.value); } catch {}
+        S.setTheme && S.setTheme(themeSel.value);
+      };
     }
 
-    // language (unchanged: uses S.langKey today)
+    // LANGUAGE: per-site (unchanged)
     const langSel = document.getElementById("sstep-lang");
     if (langSel) {
       langSel.value = S.langKey || "auto";
       langSel.onchange = () => S.setLanguage && S.setLanguage(langSel.value);
     }
 
-    // --- Position UI
+    // Position UI (per-site)
     posBtn = document.getElementById("sstep-pos-btn");
     posIcon = document.getElementById("sstep-pos-icon");
     posPop = document.getElementById("sstep-pos-pop");
 
-    // Start with default, then hydrate from storage
-    S.setToolbarPos(DEFAULT_POS);
-    loadPos().then((v) => S.setToolbarPos(v));
-
+    let current = loadPos();
+    applyPos(current);
+    setPosButton(current);
+    buildPositionPopover(current);
     wireOutsideClose();
 
     if (posBtn) {
-      posBtn.onclick = async () => {
-        // refresh current in case it changed in another tab
-        lastKnownPos = await loadPos();
-        buildPositionPopover(lastKnownPos);
-        updateFlipFor(posPop, lastKnownPos);
+      posBtn.onclick = () => {
+        current = loadPos();
+        buildPositionPopover(current);
+        updateFlipFor(posPop, current);
         posPop.hidden = !posPop.hidden;
-        if (!posPop.hidden) { customPop && (customPop.hidden = true); } // close other popover
+        if (!posPop.hidden) { customPop && (customPop.hidden = true); }
       };
     }
 
-    // --- Customization popover (delegates to S.renderPanelOptions)
+    // --- Customization popover — Transition slider (global) -------------------
     customBtn = barEl.querySelector("#sstep-customize-btn");
     const gearIcon = barEl.querySelector("#sstep-gear-icon");
     customPop = barEl.querySelector("#sstep-custom-pop");
@@ -224,42 +202,59 @@
     }
 
     if (customBtn && customPop) {
-      // initial render of options (placeholder or real)
-      if (typeof S.renderPanelOptions === "function") {
-        S.renderPanelOptions(customPop);
-      } else {
-        customPop.innerHTML = `
-          <div class="section-title">Appearance</div>
-          <div class="sstep-field">
-            <label>Theme</label>
-            <div class="sstep-row"><em>Theme + custom colors will go here.</em></div>
+      customPop.innerHTML = `
+        <div class="section-title">Appearance</div>
+        <div class="sstep-field">
+          <label>Fade speed (0s = instant, 1s = slow)</label>
+          <div class="sstep-row">
+            <input id="sstep-trans-slider" type="range" min="0" max="1" step="0.1" value="0" />
+            <span id="sstep-trans-label">0.0s</span>
           </div>
-          <div class="section-title">Behavior</div>
-          <div class="sstep-field">
-            <label>Modes</label>
-            <div class="sstep-row"><em>Sentences / Group / Paragraph selector goes here.</em></div>
+          <div class="sstep-row">
+            <small>Controls how slowly highlights fade between steps.</small>
           </div>
-          <div class="section-title">Shortcuts</div>
-          <div class="sstep-field">
-            <label>Hotkeys</label>
-            <div class="sstep-row"><em>Custom hotkeys editor will live here.</em></div>
-          </div>
-        `;
-      }
+        </div>
+      `;
 
-      // toggle open/close with flip according to toolbar position
-      customBtn.addEventListener("click", async () => {
-        lastKnownPos = await loadPos();
-        updateFlipFor(customPop, lastKnownPos);
+      (async () => {
+        const slider = customPop.querySelector("#sstep-trans-slider");
+        const label  = customPop.querySelector("#sstep-trans-label");
+        if (!slider || !label) return;
+
+        // Initial sync from storage
+        const ms = await S.Settings?.get("transitionMs");
+        syncTransitionControls(ms);
+        S.applyTransitionMs && S.applyTransitionMs(ms);
+
+        // Live update while sliding (input) and persist on change
+        slider.addEventListener("input", () => {
+          const s = Number(slider.value) || 0;
+          label.textContent = `${s.toFixed(1)}s`;
+          S.applyTransitionMs && S.applyTransitionMs(Math.round(s * 1000));
+        });
+        slider.addEventListener("change", async () => {
+          const s = Number(slider.value) || 0;
+          await S.Settings?.set({ transitionMs: Math.round(s * 1000) });
+        });
+
+        // React to global changes from other tabs
+        document.addEventListener("sstep:transitionMs", (ev) => {
+          const newMs = ev?.detail?.ms;
+          syncTransitionControls(newMs);
+        });
+      })();
+
+      customBtn.addEventListener("click", () => {
+        const cur = loadPos();
+        updateFlipFor(customPop, cur);
         const willOpen = !!customPop.hidden;
-        // close the other popover
         posPop && (posPop.hidden = true);
         customPop.hidden = !willOpen ? true : false;
         customBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
       });
     }
 
-    // --- Ko-fi icon
+    // Ko-fi icon
     const kofiIcon = document.getElementById("sstep-kofi-icon");
     if (kofiIcon) {
       kofiIcon.src = extURL("other-icons/kofi.png");
