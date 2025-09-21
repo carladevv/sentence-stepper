@@ -1,0 +1,15 @@
+/* Fade duration driven by --sstep-trans-ms (0..1000ms) */
+.sstep-sentence {
+  transition:
+    background-color var(--sstep-trans-ms, 0ms) ease,
+    box-shadow       var(--sstep-trans-ms, 0ms) ease,
+    border-color     var(--sstep-trans-ms, 0ms) ease,
+    color            var(--sstep-trans-ms, 0ms) ease,
+    opacity          var(--sstep-trans-ms, 0ms) ease,
+    -webkit-text-fill-color var(--sstep-trans-ms, 0ms) ease;
+}
+/* Overlay fade for gradient-span theme */
+#sstep-gradient-overlay { transition: opacity var(--sstep-trans-ms, 0ms) ease; }
+
+/* Smooth scrolling while extension is active */
+html.sstep-scroll { scroll-behavior: smooth; }

@@ -1,0 +1,17 @@
+/* Optional page veil (if you enable SStep to add .sstep-gradient on <html>) */
+.sstep-gradient::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(#fff 0, rgba(255,255,255,.5) 20%, rgba(255,255,255,.85) 65%, #fff 100%);
+}
+
+/* Gradient overlay above content, below toolbar */
+#sstep-gradient-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 2147483646; /* toolbar is higher */
+}

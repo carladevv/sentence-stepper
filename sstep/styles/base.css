@@ -1,0 +1,14 @@
+/* Base text-wrapping + dimming */
+.sstep-sentence {
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.sstep-muted { opacity: .25; transition: opacity .15s; }
+
+/* Ensure highlighted text stays fully readable inside nested spans */
+.sstep-current,
+.sstep-current .sstep-sentence {
+  opacity: 1 !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
