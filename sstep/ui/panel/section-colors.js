@@ -64,7 +64,6 @@
       const state = { ...DEFAULTS, ...persisted };
       const handles = {};
 
-      // Compact group
       handles.boxBg     = makeRow(host, "boxBg",     "Box highlight",  state.boxBg,     (v) => { state.boxBg = v; commit(); });
       handles.boxBorder = makeRow(host, "boxBorder", "Box border",     state.boxBorder, (v) => { state.boxBorder = v; commit(); });
       handles.gradStart = makeRow(host, "gradStart", "Gradient start", state.gradStart, (v) => { state.gradStart = v; commit(); });
@@ -78,10 +77,9 @@
       btnRow.appendChild(resetBtn);
       host.appendChild(btnRow);
 
-      // Initial paint (in case the page loaded before settings init, this re-applies)
+      // Apply current
       S.applyColors && S.applyColors(state);
 
-      // Persist with small debounce
       let t;
       async function commit() {
         clearTimeout(t);
@@ -91,7 +89,6 @@
         }, 60);
       }
 
-      // Instant in-place reset
       resetBtn.onclick = async () => {
         Object.assign(state, DEFAULTS);
         handles.boxBg.set(state.boxBg);
@@ -102,7 +99,6 @@
         await S.Settings?.set({ colors: { ...state } });
       };
 
-      // External changes (other tabs/windows)
       document.addEventListener("sstep:colorsChanged", (ev) => {
         const c = ev?.detail?.colors;
         if (!c) return;

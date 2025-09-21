@@ -48,9 +48,16 @@ chrome.action.onClicked.addListener(async (tab) => {
   } catch (e) { }
 
   const files = [
+
+    // Settings
+    "sstep/settings/storage.js",
+    "sstep/settings/detect-theme.js",
+    "sstep/settings/color-tuning.js",
+    "sstep/settings/apply.js",
+    "sstep/settings/index.js",
+
     // Core
     "Readability.js",
-    "sstep/00-settings.js",
     "sstep/01-utils.js",
     "sstep/02-language.js",
     "sstep/03-dom.js",
@@ -71,7 +78,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     "sstep/ui/toolbar/control-customize.js",
 
     // Main stepping engine
-    "sstep/08-main.js"
+    "sstep/05-main.js"
   ];
 
   for (const f of files) {
