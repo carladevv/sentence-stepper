@@ -50,11 +50,11 @@ chrome.action.onClicked.addListener(async (tab) => {
   const files = [
 
     // Settings
-    "sstep/settings/storage.js",
-    "sstep/settings/detect-theme.js",
-    "sstep/settings/color-tuning.js",
-    "sstep/settings/apply.js",
-    "sstep/settings/index.js",
+    "sstep/settings/settings-storage.js",
+    "sstep/settings/settings-detect-theme.js",
+    "sstep/settings/settings-color-tuning.js",
+    "sstep/settings/settings-apply.js",
+    "sstep/settings/settings-index.js",
 
     // Core
     "Readability.js",
@@ -63,12 +63,22 @@ chrome.action.onClicked.addListener(async (tab) => {
     "sstep/03-dom.js",
     "sstep/04-overlay.js",
 
+    // Utils
+    "sstep/utils/utils-hotkeys.js",
+
+    // Features
+    "sstep/features/feature-hotkeys.js",
+    "sstep/features/feature-clickjump.js",
+    "sstep/features/feature-spans.js",
+    "sstep/features/feature-bookmark.js",
+
     // Panel (customization UI) + sections
     "sstep/ui/panel/panel-index.js",
     "sstep/ui/panel/section-transition.js",
     "sstep/ui/panel/section-colors.js",
     "sstep/ui/panel/section-modes.js",
     "sstep/ui/panel/section-hotkeys.js",
+    "sstep/ui/panel/section-bookmark.js",
 
     // Toolbar shell + controls
     "sstep/ui/toolbar/toolbar-index.js",

@@ -1,7 +1,10 @@
 // ui/panel/sections/section-modes.js
 (() => {
   const S = (window.SStep = window.SStep || {});
-  const DEFAULT_MODE = "sentences"; // "sentences" | "paragraphs" | "group"
+
+  function sanitize(mode) {
+    return mode === "paragraphs" ? "paragraphs" : "sentences";
+  }
 
   function broadcast(mode) {
     const ev = new CustomEvent("sstep:modeChanged", { detail: { mode } });
@@ -12,37 +15,55 @@
     id: "modes",
     title: "Stepping Mode",
     async render(host) {
-      const cur = (await S.Settings?.get("mode")) || DEFAULT_MODE;
+      const stored = await S.Settings?.get("mode");
+      let mode = sanitize(stored);
+      // Migrate away from deprecated "group"
+      if (stored && stored !== mode) {
+        await S.Settings?.set({ mode });
+      }
 
-      host.innerHTML = `
-        <div role="radiogroup" aria-label="Stepping mode" class="sstep-field">
-          <label class="sstep-row"><input type="radio" name="sstep-mode" value="sentences"> Sentences</label>
-          <label class="sstep-row"><input type="radio" name="sstep-mode" value="paragraphs"> Paragraphs</label>
-          <label class="sstep-row"><input type="radio" name="sstep-mode" value="group"> Group short sentences</label>
-        </div>
-        <div class="sstep-row">
-          <small>Choose how the stepper advances. “Group” merges very short sentences into their neighbor.</small>
-        </div>
-      `;
+      const wrap = document.createElement("div");
+      wrap.className = "sstep-field";
+      host.appendChild(wrap);
 
-      // set initial
-      const radios = host.querySelectorAll('input[name="sstep-mode"]');
-      radios.forEach(r => { if (r.value === cur) r.checked = true; });
+      // Radio helper
+      function addOption(val, label) {
+        const line = document.createElement("label");
+        line.style.display = "flex";
+        line.style.gap = "8px";
+        line.style.alignItems = "center";
+        line.style.margin = "4px 0";
 
-      radios.forEach(r => {
+        const r = document.createElement("input");
+        r.type = "radio";
+        r.name = "sstep-mode";
+        r.value = val;
+        r.checked = (mode === val);
+
+        const span = document.createElement("span");
+        span.textContent = label;
+
         r.addEventListener("change", async () => {
           if (!r.checked) return;
-          const mode = r.value;
+          mode = sanitize(val);
           await S.Settings?.set({ mode });
+          S.Spans?.setMode(mode);
           broadcast(mode);
         });
-      });
 
-      // reflect external changes
-      document.addEventListener("sstep:modeChanged", (ev) => {
-        const m = ev?.detail?.mode || DEFAULT_MODE;
-        radios.forEach(r => r.checked = (r.value === m));
-      });
+        line.appendChild(r);
+        line.appendChild(span);
+        wrap.appendChild(line);
+      }
+
+      addOption("sentences", "Sentence by sentence (default)");
+      addOption("paragraphs", "Paragraph by paragraph");
+
+      const note = document.createElement("div");
+      note.className = "sstep-row";
+      note.innerHTML = `<small>Switching mode rebuilds spans but keeps your place on the page.</small>`;
+      host.appendChild(note);
     }
   });
 })();
+

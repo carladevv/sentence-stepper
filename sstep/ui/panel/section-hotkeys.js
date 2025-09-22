@@ -1,54 +1,31 @@
 // ui/panel/sections/section-hotkeys.js
 (() => {
   const S = (window.SStep = window.SStep || {});
-  const DEFAULTS = {
-    next: "Alt+Right",
-    prev: "Alt+Left",
-  };
+  const U = S.Hotkeys?.Utils;
+  const DEFAULTS = { next: "Alt+Right", prev: "Alt+Left" };
 
   function broadcast(map) {
     const ev = new CustomEvent("sstep:hotkeysChanged", { detail: { hotkeys: map } });
     document.dispatchEvent(ev);
   }
 
-  function prettyCombo(e) {
-    const parts = [];
-    if (e.ctrlKey)  parts.push("Ctrl");
-    if (e.metaKey)  parts.push("Meta");
-    if (e.altKey)   parts.push("Alt");
-    if (e.shiftKey) parts.push("Shift");
-
-    let key = e.key;
-    // Normalize common keys
-    const map = { ArrowRight: "Right", ArrowLeft: "Left", " ": "Space" };
-    key = map[key] || key;
-
-    // Ignore pure modifier presses
-    if (["Control","Meta","Alt","Shift"].includes(key)) return null;
-
-    // Single-letter uppercase
-    if (key.length === 1) key = key.toUpperCase();
-
-    parts.push(key);
-    return parts.join("+");
-  }
-
   function makeRecorder(rowEl, labelText, value, onSet) {
     const row = document.createElement("div");
     row.className = "sstep-row";
+
     const label = document.createElement("label");
     label.style.minWidth = "130px";
     label.textContent = labelText;
 
     const input = document.createElement("input");
     input.type = "text";
-    input.value = value;
+    input.value = U.normalizeComboString(value) || "";
     input.readOnly = true;
-    input.style.width = "160px";
+    input.style.width = "180px";
     input.style.cursor = "pointer";
 
     const hint = document.createElement("small");
-    hint.textContent = "Click, then press keys";
+    hint.textContent = "Click, then press keys together";
 
     row.appendChild(label);
     row.appendChild(input);
@@ -56,24 +33,38 @@
     rowEl.appendChild(row);
 
     let recording = false;
+    let down = new Set();
+
+    function update(e) {
+      const combo = U.comboFromEvent(e, down);
+      if (!combo) return;
+      input.value = combo;
+      onSet(combo);
+    }
 
     input.addEventListener("focus", () => {
       recording = true;
+      down.clear();
       hint.textContent = "Listening… press combo";
     });
     input.addEventListener("blur", () => {
       recording = false;
-      hint.textContent = "Click, then press keys";
+      down.clear();
+      hint.textContent = "Click, then press keys together";
     });
 
     input.addEventListener("keydown", (e) => {
       if (!recording) return;
       e.preventDefault();
       e.stopPropagation();
-      const combo = prettyCombo(e);
-      if (!combo) return; // ignore pure modifier
-      input.value = combo;
-      onSet(combo);
+      down.add(e.key);
+      update(e);
+    });
+    input.addEventListener("keyup", (e) => {
+      if (!recording) return;
+      e.preventDefault();
+      e.stopPropagation();
+      down.delete(e.key);
     });
   }
 
@@ -90,6 +81,7 @@
 
       async function commit() {
         await S.Settings?.set({ hotkeys: { ...state } });
+        S.Hotkeys?.applySettings(state);
         broadcast(state);
       }
 
@@ -98,15 +90,13 @@
 
       const note = document.createElement("div");
       note.className = "sstep-row";
-      note.innerHTML = `<small>These override the default Alt+Left / Alt+Right when the page is active.</small>`;
+      note.innerHTML = `<small>Defaults remain <strong>Alt+Left / Alt+Right</strong> until you remap. You can use multiple keys (e.g., Alt+J+K).</small>`;
       host.appendChild(note);
 
-      // reflect external changes
       document.addEventListener("sstep:hotkeysChanged", (ev) => {
         const hk = ev?.detail?.hotkeys || state;
         state.next = hk.next || state.next;
         state.prev = hk.prev || state.prev;
-        // (UI inputs will reflect on next open; keeping live sync is optional)
       });
     }
   });
