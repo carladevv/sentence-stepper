@@ -38,6 +38,21 @@
     return barEl;
   }
 
+  function fmtCombo(c) {
+    // Normalize for display if utils exist; otherwise just pass through
+    const norm = S.Hotkeys?.Utils?.normalizeComboString?.(c) || c || "";
+    return norm.trim();
+  }
+
+  function setHotkeyTooltips(prevBtn, nextBtn, hk) {
+    const fallback = S.Hotkeys?.state?.map || { next: "Alt+Right", prev: "Alt+Left" };
+    const prev = fmtCombo((hk && hk.prev) || fallback.prev);
+    const next = fmtCombo((hk && hk.next) || fallback.next);
+
+    if (prevBtn) prevBtn.title = prev ? `Previous (${prev})` : "Previous";
+    if (nextBtn) nextBtn.title = next ? `Next (${next})` : "Next";
+  }
+
   S.Toolbar.mount = function mount() {
     const bar = createShell();
 
@@ -46,6 +61,27 @@
     const nextBtn = document.getElementById("sstep-next");
     if (prevBtn) prevBtn.onclick = () => S.prev && S.prev();
     if (nextBtn) nextBtn.onclick = () => S.next && S.next();
+
+    // --- Hotkey tooltips: initial + live updates ---
+    // 1) Initial (from settings if available; else from current hotkey state)
+    (async () => {
+      try {
+        if (S.Settings?.get) {
+          const hk = await S.Settings.get("hotkeys");
+          setHotkeyTooltips(prevBtn, nextBtn, hk);
+        } else {
+          setHotkeyTooltips(prevBtn, nextBtn, S.Hotkeys?.state?.map);
+        }
+      } catch {
+        setHotkeyTooltips(prevBtn, nextBtn, S.Hotkeys?.state?.map);
+      }
+    })();
+
+    // 2) Live when user remaps
+    document.addEventListener("sstep:hotkeysChanged", (ev) => {
+      const hk = ev?.detail?.hotkeys;
+      setHotkeyTooltips(prevBtn, nextBtn, hk);
+    });
 
     // Controls
     S.ToolbarControls = S.ToolbarControls || {};

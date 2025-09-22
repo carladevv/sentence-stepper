@@ -4,8 +4,8 @@
   const DEFAULTS = {
     boxBg:     "#fff59d",
     boxBorder: "#000000",
-    gradStart: "#ff6b6b",
-    gradEnd:   "#4d7cff",
+    gradStart: "#ff0000",
+    gradEnd:   "#0044ff",
   };
 
   function makeRow(host, key, labelText, initial, onChange) {

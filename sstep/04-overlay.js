@@ -59,6 +59,7 @@
     if (!span) return;
     span.style.color = "";
     span.style.webkitTextFillColor = "";
+    span.style.removeProperty("-webkit-text-fill-color");
   };
 
   S.updateGradientOverlay = function updateGradientOverlay() {
@@ -70,12 +71,16 @@
     const curSpan = ST.sentences[ST.current];
     if (!curSpan) return;
 
-    const isSpanBg = document.documentElement.classList.contains("sstep-theme-gradient-span");
+    const isSpanBg   = document.documentElement.classList.contains("sstep-theme-gradient-span");
     const isTextSpan = document.documentElement.classList.contains("sstep-theme-gradient-text-span");
     if (!isSpanBg && !isTextSpan) {
       if (ST.lastTextPaintIndex !== -1) { S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]); ST.lastTextPaintIndex = -1; }
       return;
     }
+
+    // Colors from applyColors()
+    const GRADIENT_BG   = "linear-gradient(90deg, var(--sstep-color-grad-start), var(--sstep-color-grad-end))";
+    const GRADIENT_TEXT = "linear-gradient(90deg, var(--sstep-color-grad-start-text), var(--sstep-color-grad-end-text))";
 
     const r = document.createRange();
     r.selectNodeContents(curSpan);
@@ -103,7 +108,7 @@
           width: rc.width + "px",
           height: (rc.height + 2*fudge) + "px",
           borderRadius: "4px",
-          backgroundImage: "linear-gradient(90deg, rgba(255,0,0,.28), rgba(0,0,255,.28))",
+          backgroundImage: GRADIENT_BG,
           backgroundRepeat: "no-repeat",
           backgroundSize: total + "px 100%",
           backgroundPosition: (-offset) + "px 0",
@@ -113,8 +118,10 @@
       }
 
       if (isTextSpan) {
-        curSpan.style.color = "transparent";
-        curSpan.style.webkitTextFillColor = "transparent";
+        // Force-hide the base glyphs (beats base.css !important rule)
+        curSpan.style.setProperty("color", "transparent", "important");
+        curSpan.style.setProperty("-webkit-text-fill-color", "transparent", "important");
+        curSpan.style.setProperty("webkitTextFillColor", "transparent", "important");
 
         const midY = rc.top + rc.height / 2;
         const startX = rc.left + 0.5, endX = rc.right - 0.5;
@@ -130,7 +137,7 @@
           width: rc.width + "px",
           height: (rc.height + 2*fudge) + "px",
           overflow: "hidden",
-          backgroundImage: "linear-gradient(90deg, rgba(255,0,0,1), rgba(0,0,255,1))",
+          backgroundImage: GRADIENT_TEXT, // full opacity stops
           backgroundRepeat: "no-repeat",
           backgroundSize: total + "px 100%",
           backgroundPosition: (-offset) + "px 0",
@@ -144,6 +151,8 @@
           whiteSpace: "nowrap",
           transform: "translateZ(0)"
         });
+
+        // Match font metrics
         const cs = getComputedStyle(curSpan);
         wrap.style.font = cs.font;
         wrap.style.letterSpacing = cs.letterSpacing;
@@ -162,4 +171,9 @@
     cancelAnimationFrame(ST.overlayRaf);
     ST.overlayRaf = requestAnimationFrame(S.updateGradientOverlay);
   };
+
+  // Repaint when colors change
+  document.addEventListener("sstep:colorsChanged", () => {
+    S.scheduleOverlayUpdate && S.scheduleOverlayUpdate();
+  });
 })();
