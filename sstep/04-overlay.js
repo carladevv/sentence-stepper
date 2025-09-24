@@ -1,3 +1,4 @@
+// 04-overlay.js
 (() => {
   const S = (window.SStep = window.SStep || {});
   const ST = S.state;
@@ -23,7 +24,7 @@
           left: "0px",
           top: "0px",
           pointerEvents: "none",
-          zIndex: "2147483646",
+          zIndex: "2147483646", // toolbar stays above this, see overlay.css
           userSelect: "none",
           MozUserSelect: "none",
           WebkitUserSelect: "none"
@@ -118,10 +119,9 @@
       }
 
       if (isTextSpan) {
-        // Force-hide the base glyphs (beats base.css !important rule)
+        // Force-hide the base glyphs even if site CSS tries to override (base.css makes them inherit) :contentReference[oaicite:1]{index=1}
         curSpan.style.setProperty("color", "transparent", "important");
         curSpan.style.setProperty("-webkit-text-fill-color", "transparent", "important");
-        curSpan.style.setProperty("webkitTextFillColor", "transparent", "important");
 
         const midY = rc.top + rc.height / 2;
         const startX = rc.left + 0.5, endX = rc.right - 0.5;
@@ -130,6 +130,11 @@
 
         const frag = lineRange.cloneContents();
         const wrap = document.createElement("div");
+
+        // Hard reset so toolbar/site CSS can't leak into wrappers
+        // Then set only what we want.
+        wrap.style.all = "initial";
+
         Object.assign(wrap.style, {
           position: "absolute",
           left: left + "px",
@@ -148,15 +153,23 @@
           borderRadius: "4px",
           display: "block",
           lineHeight: (rc.height + 2*fudge) + "px",
-          whiteSpace: "nowrap",
-          transform: "translateZ(0)"
+          // Allow justification
+          whiteSpace: "normal",
+          transform: "translateZ(0)",
+          pointerEvents: "none",
+          // Improve glyph consistency
+          textRendering: "optimizeLegibility"
         });
 
-        // Match font metrics
+        // Copy typographic metrics from the real span
         const cs = getComputedStyle(curSpan);
         wrap.style.font = cs.font;
         wrap.style.letterSpacing = cs.letterSpacing;
         wrap.style.wordSpacing = cs.wordSpacing;
+        wrap.style.direction = cs.direction;
+        wrap.style.hyphens = cs.hyphens;
+        wrap.style.textAlign = cs.textAlign;          // will be 'justify' on justified pages
+        if (cs.textAlign.includes("justify")) wrap.style.textJustify = "inter-word";
 
         wrap.appendChild(frag);
         ov.appendChild(wrap);
@@ -172,7 +185,7 @@
     ST.overlayRaf = requestAnimationFrame(S.updateGradientOverlay);
   };
 
-  // Repaint when colors change
+  // Repaint when custom colors change (keeps overlays in sync with theme vars)
   document.addEventListener("sstep:colorsChanged", () => {
     S.scheduleOverlayUpdate && S.scheduleOverlayUpdate();
   });

@@ -11,8 +11,9 @@
     barEl.className = "sstep-toolbar";
 
     barEl.innerHTML = `
+    <button id="sstep-help-btn" title="What’s new?" aria-label="What’s new">?</button>
       <span class="brand">Sentence-Stepper</span>
-
+      
       <button class="btn" id="sstep-prev" title="Alt+Left">Prev</button>
       <button class="btn" id="sstep-next" title="Alt+Right">Next</button>
 
@@ -39,7 +40,6 @@
   }
 
   function fmtCombo(c) {
-    // Normalize for display if utils exist; otherwise just pass through
     const norm = S.Hotkeys?.Utils?.normalizeComboString?.(c) || c || "";
     return norm.trim();
   }
@@ -56,14 +56,16 @@
   S.Toolbar.mount = function mount() {
     const bar = createShell();
 
-    // Core navigation
     const prevBtn = document.getElementById("sstep-prev");
     const nextBtn = document.getElementById("sstep-next");
     if (prevBtn) prevBtn.onclick = () => S.prev && S.prev();
     if (nextBtn) nextBtn.onclick = () => S.next && S.next();
 
-    // --- Hotkey tooltips: initial + live updates ---
-    // 1) Initial (from settings if available; else from current hotkey state)
+    // What's new button
+    const helpBtn = document.getElementById("sstep-help-btn");
+    helpBtn?.addEventListener("click", () => S.WhatsNew?.open?.());
+
+    // Initial + live hotkey tooltips
     (async () => {
       try {
         if (S.Settings?.get) {
@@ -76,23 +78,20 @@
         setHotkeyTooltips(prevBtn, nextBtn, S.Hotkeys?.state?.map);
       }
     })();
-
-    // 2) Live when user remaps
     document.addEventListener("sstep:hotkeysChanged", (ev) => {
       const hk = ev?.detail?.hotkeys;
       setHotkeyTooltips(prevBtn, nextBtn, hk);
     });
 
-    // Controls
     S.ToolbarControls = S.ToolbarControls || {};
     S.ToolbarControls.initPosition && S.ToolbarControls.initPosition(bar);
     S.ToolbarControls.initTheme && S.ToolbarControls.initTheme(bar);
     S.ToolbarControls.initLanguage && S.ToolbarControls.initLanguage(bar);
     S.ToolbarControls.initCustomize && S.ToolbarControls.initCustomize(bar);
 
-    // Ko-fi icon
     const RT = (typeof browser !== "undefined" ? browser : chrome);
     const extURL = (p) => (RT?.runtime?.getURL ? RT.runtime.getURL(p) : p);
+
     const kofiIcon = document.getElementById("sstep-kofi-icon");
     if (kofiIcon) {
       kofiIcon.src = extURL("other-icons/kofi.png");
@@ -101,7 +100,9 @@
       kofiIcon.style.display = "block";
     }
 
-    // Back-compat for old calls
+    const gearIcon = document.getElementById("sstep-gear-icon");
+    if (gearIcon) gearIcon.style.pointerEvents = "none";
+
     S.addToolbar = S.Toolbar.mount;
   };
 })();

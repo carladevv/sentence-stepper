@@ -10,51 +10,169 @@
   border-radius: 12px;
   background: #f8fafc;
   color: #111827;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-  font: 13px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  font: 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
-.sstep-toolbar .brand { opacity: .75; font-weight: 600; margin-right: 4px; white-space: nowrap; }
+
+.sstep-toolbar .brand {
+  opacity: .75;
+  font-weight: 600;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
 .sstep-toolbar .btn {
-  all: unset; cursor: pointer;
-  padding: 6px 10px; border-radius: 8px;
-  background: #eef2f7; border: 1px solid #d6dde7; color: #111827;
+  all: unset;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #eef2f7;
+  border: 1px solid #d6dde7;
+  color: #111827;
 }
-.sstep-toolbar .btn:hover  { background: #e3e9f1; }
-.sstep-toolbar .btn:active { background: #d6dde7; }
+
+.sstep-toolbar .btn:hover {
+  background: #e3e9f1;
+}
+
+.sstep-toolbar .btn:active {
+  background: #d6dde7;
+}
+
 .sstep-toolbar .select {
-  all: unset; font: inherit;
-  padding: 6px 8px; border-radius: 8px;
-  border: 1px solid #d6dde7; background: #fff;
+  all: unset;
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #d6dde7;
+  background: #fff;
 }
-.sstep-toolbar .iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 32px; padding: 0; }
-.sstep-toolbar .iconbtn img { width: 18px; height: 18px; display: block; }
+
+.sstep-toolbar .iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+}
+
+.sstep-toolbar .iconbtn img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
 
 /* Screen anchors */
-.sstep-pos-tr { top: 1vw; right: 1vw; }
-.sstep-pos-tl { top: 1vw; left: 1vw; }
-.sstep-pos-br { bottom: 1vw; right: 1vw; }
-.sstep-pos-bl { bottom: 1vw; left: 1vw; }
-.sstep-pos-tc { top: 1vw; left: 50%; transform: translateX(-50%); }
-.sstep-pos-bc { bottom: 1vw; left: 50%; transform: translateX(-50%); }
+.sstep-pos-tr {
+  top: 1vw;
+  right: 1vw;
+}
+
+.sstep-pos-tl {
+  top: 1vw;
+  left: 1vw;
+}
+
+.sstep-pos-br {
+  bottom: 1vw;
+  right: 1vw;
+}
+
+.sstep-pos-bl {
+  bottom: 1vw;
+  left: 1vw;
+}
+
+.sstep-pos-tc {
+  top: 1vw;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sstep-pos-bc {
+  bottom: 1vw;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 /* Position chooser popover */
 .sstep-toolbar .pos-popover {
   position: absolute;
-  top: 100%; right: 0; margin-top: 8px;
-  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.12);
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .12);
   padding: 8px;
-  display: grid; grid-template-columns: repeat(3, 32px); gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  gap: 8px;
   z-index: 2147483647;
 }
+
 .sstep-toolbar .pos-popover .pos-item {
-  all: unset; cursor: pointer;
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  background: #f3f6fb; border: 1px solid #d6dde7;
+  all: unset;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f6fb;
+  border: 1px solid #d6dde7;
 }
-.sstep-toolbar .pos-popover .pos-item:hover  { background: #e9eef6; }
-.sstep-toolbar .pos-popover .pos-item.active { outline: 2px solid #94a3b8; }
-.sstep-toolbar .pos-popover .pos-item img { width: 18px; height: 18px; }
-.sstep-toolbar .pos-popover[hidden] { display: none !important; }
-.sstep-toolbar .pos-popover.flip-up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 8px; }
+
+.sstep-toolbar .pos-popover .pos-item:hover {
+  background: #e9eef6;
+}
+
+.sstep-toolbar .pos-popover .pos-item.active {
+  outline: 2px solid #94a3b8;
+}
+
+.sstep-toolbar .pos-popover .pos-item img {
+  width: 18px;
+  height: 18px;
+}
+
+.sstep-toolbar .pos-popover[hidden] {
+  display: none !important;
+}
+
+.sstep-toolbar .pos-popover.flip-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* Subtle tiny "?" next to the brand */
+.sstep-toolbar #sstep-help-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border-radius: 9999px;
+  border: 1px solid #d6dde7;
+  /* same family as toolbar buttons */
+  background: #f8fafc;
+  /* flat bg, matches bar */
+  color: #6b7280;
+  /* gray-500 */
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sstep-toolbar #sstep-help-btn:hover {
+  background: #eef2f7;
+  /* soft hover, still subtle */
+}

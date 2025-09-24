@@ -25,6 +25,9 @@
 
     // Initial focus (will also dispatch focusChanged)
     S.focusIndex(ST.current, { scroll: true });
+
+    // New features announcement
+    S.WhatsNew?.maybeShow();
   };
 
   S.removeEffect = function (keepPlace = true) {

@@ -1,43 +1,79 @@
-// ui/panel/customization-panel.js
+// ui/panel/panel-index.js
 (() => {
   const S = (window.SStep = window.SStep || {});
+  S.Panel = S.Panel || {};
 
-  const Panel = (S.Panel = S.Panel || {});
-  Panel._sections = []; // array of { id, title, render(host) }
+  // internal registry (sections call registerSection before mount)
+  const sections = [];
+  S.Panel.registerSection = (def) => { if (def && def.id && def.render) sections.push(def); };
 
-  Panel.registerSection = function registerSection(section) {
-    if (!section || !section.id || !section.render) return;
-    Panel._sections.push(section);
-  };
+  function extURL(p) {
+    const RT = (typeof browser !== "undefined" ? browser : chrome);
+    return RT?.runtime?.getURL ? RT.runtime.getURL(p) : p;
+  }
 
-  // Render all registered sections into a provided container (the toolbar popover)
-  Panel.renderTo = function renderTo(host) {
+  S.Panel.mount = async function mount() {
+    const host = document.getElementById("sstep-custom-pop");
     if (!host) return;
-    host.replaceChildren();
 
-    for (const sec of Panel._sections) {
-      const wrap = document.createElement("section");
-      wrap.dataset.section = sec.id;
+    const root = host.shadowRoot || host.attachShadow({ mode: "open" });
+    while (root.firstChild) root.removeChild(root.firstChild);
 
-      const title = document.createElement("div");
-      title.className = "section-title";
-      title.textContent = sec.title || sec.id;
+    // Load CSS into shadow
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = extURL("sstep/styles/panel.css"); // keep your current path
+    root.appendChild(link);
 
-      const field = document.createElement("div");
-      field.className = "sstep-field";
+    // Frame
+    const frame = document.createElement("div");
+    frame.className = "ssp-pop";
+    root.appendChild(frame);
 
-      wrap.appendChild(title);
-      wrap.appendChild(field);
-      host.appendChild(wrap);
+    // Header (title only — no Close button)
+    const header = document.createElement("div");
+    header.className = "header";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = "Global Settings";
+    header.appendChild(title);
+    frame.appendChild(header);
 
-      try { sec.render(field); } catch (e) { console.error("[SStep] section render error:", sec.id, e); }
+    // Body
+    const body = document.createElement("div");
+    body.className = "body";
+    frame.appendChild(body);
+
+    // Render sections
+    for (const def of sections) {
+      const sec = document.createElement("section");
+      sec.className = "sec";
+      sec.setAttribute("data-section", def.id); // CSS can target per-section
+      body.appendChild(sec);
+
+      if (def.title) {
+        const h = document.createElement("div");
+        h.className = "section-title";
+        h.textContent = def.title;
+        sec.appendChild(h);
+      }
+
+      const holder = document.createElement("div");
+      holder.className = "sstep-field";
+      sec.appendChild(holder);
+
+      try {
+        await def.render(holder);
+      } catch (err) {
+        const warn = document.createElement("div");
+        warn.textContent = `Section "${def.id}" failed to render`;
+        sec.appendChild(warn);
+        console.warn("[SStep] Section render error:", def.id, err);
+      }
     }
   };
 
-  // Legacy helper to render into older callsites
-  S.renderPanelOptions = function renderPanelOptions(host) {
-    Panel.renderTo(host);
+  S.Panel.ensureMounted = function ensureMounted() {
+    try { S.Panel.mount(); } catch (e) { console.warn("[SStep] Panel mount failed", e); }
   };
-
-  // No side panel/backdrop in this version — the toolbar popover is the UI.
 })();

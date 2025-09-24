@@ -71,6 +71,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     "sstep/features/feature-clickjump.js",
     "sstep/features/feature-spans.js",
     "sstep/features/feature-bookmark.js",
+    "sstep/features/feature-whats-new.js",
 
     // Panel (customization UI) + sections
     "sstep/ui/panel/panel-index.js",

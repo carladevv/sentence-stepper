@@ -8,56 +8,44 @@
     const pop  = document.getElementById("sstep-custom-pop");
     const gear = document.getElementById("sstep-gear-icon");
 
+    // --- start CLOSED on load ---
+    if (pop) pop.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+
+    // gear icon setup (no extra click target)
     const RT = (typeof browser !== "undefined" ? browser : chrome);
     const extURL = (p) => (RT?.runtime?.getURL ? RT.runtime.getURL(p) : p);
-
     if (gear) {
       gear.src = extURL("other-icons/gear.png");
       gear.style.width = "18px";
       gear.style.height = "18px";
       gear.style.display = "block";
+      gear.style.pointerEvents = "none"; // avoid double-toggle via icon
     }
     if (!btn || !pop) return;
 
-    // Ensure a dedicated scroll container inside the popover.
-    // This lets the outer popover keep border-radius + overflow: hidden,
-    // so the scrollbar never destroys the rounded corners.
-    function getBody() {
-      let body = pop.querySelector(".sstep-popover-body");
-      if (!body) {
-        body = document.createElement("div");
-        body.className = "sstep-popover-body";
-        pop.appendChild(body);
-      }
-      return body;
-    }
-
+    // Toggle on click
     btn.addEventListener("click", () => {
-      const wasHidden = !!pop.hidden;
+      const opening = pop.hidden;
 
-      // close position popover if open
+      // close the position popover if open
       const posPop = document.getElementById("sstep-pos-pop");
       if (posPop) posPop.hidden = true;
 
-      if (wasHidden) {
-        const body = getBody();
-        if (typeof S.Panel?.renderTo === "function") {
-          S.Panel.renderTo(body);
-        } else if (typeof S.renderPanelOptions === "function") {
-          // legacy fallback
-          S.renderPanelOptions(body);
-        }
+      if (opening) {
+        // build Shadow UI once, on first open
+        S.Panel?.ensureMounted?.();
       }
 
-      // Flip based on toolbar position
-      const mode = (barEl.className.match(/sstep-pos-(\w+)/) || [,"tr"])[1];
+      // Flip based on toolbar position class
+      const mode = (barEl.className.match(/sstep-pos-(\w+)/) || [, "tr"])[1];
       pop.classList.toggle("flip-up", /^b/.test(mode));
 
-      pop.hidden = !wasHidden;
-      btn.setAttribute("aria-expanded", pop.hidden ? "false" : "true");
+      pop.hidden = !opening;
+      btn.setAttribute("aria-expanded", opening ? "true" : "false");
     });
 
-    // Outside-click close
+    // Outside-click to close
     document.addEventListener("mousedown", (e) => {
       if (!pop.hidden && !pop.contains(e.target) && e.target !== btn) {
         pop.hidden = true;
@@ -66,3 +54,4 @@
     }, true);
   };
 })();
+

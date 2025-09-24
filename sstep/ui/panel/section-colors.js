@@ -13,7 +13,6 @@
     row.className = "sstep-row";
 
     const label = document.createElement("label");
-    label.style.minWidth = "130px";
     label.textContent = labelText;
 
     const picker = document.createElement("input");
