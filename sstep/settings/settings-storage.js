@@ -7,8 +7,8 @@
   const DEFAULT_COLORS = {
     boxBg:     "#fff59d",
     boxBorder: "#000000",
-    gradStart: "#ff0000ff",
-    gradEnd:   "#0044ffff",
+    gradStart: "#ff0000",
+    gradEnd:   "#0044ff",
   };
   const DEFAULT_HOTKEYS = { next: "Alt+Right", prev: "Alt+Left" };
 
