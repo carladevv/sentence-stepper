@@ -9,7 +9,7 @@
     const cls = S.THEMES.map(t => "sstep-theme-" + t);
     document.documentElement.classList.remove(...cls);
     document.documentElement.classList.add("sstep-theme-" + name);
-    try { localStorage.setItem("sstep-theme", name); } catch {}
+    try { localStorage.setItem("sstep-theme", name); } catch { }
     S.scheduleOverlayUpdate();
   };
 
@@ -72,7 +72,7 @@
     const curSpan = ST.sentences[ST.current];
     if (!curSpan) return;
 
-    const isSpanBg   = document.documentElement.classList.contains("sstep-theme-gradient-span");
+    const isSpanBg = document.documentElement.classList.contains("sstep-theme-gradient-span");
     const isTextSpan = document.documentElement.classList.contains("sstep-theme-gradient-text-span");
     if (!isSpanBg && !isTextSpan) {
       if (ST.lastTextPaintIndex !== -1) { S.restoreSpanColor(ST.sentences[ST.lastTextPaintIndex]); ST.lastTextPaintIndex = -1; }
@@ -80,7 +80,7 @@
     }
 
     // Colors from applyColors()
-    const GRADIENT_BG   = "linear-gradient(90deg, var(--sstep-color-grad-start), var(--sstep-color-grad-end))";
+    const GRADIENT_BG = "linear-gradient(90deg, var(--sstep-color-grad-start), var(--sstep-color-grad-end))";
     const GRADIENT_TEXT = "linear-gradient(90deg, var(--sstep-color-grad-start-text), var(--sstep-color-grad-end-text))";
 
     const r = document.createRange();
@@ -98,7 +98,7 @@
 
     for (const rc of rects) {
       const left = rc.left + window.scrollX, top = rc.top + window.scrollY;
-      const fudge = 1;
+      const fudge = 2;
 
       if (isSpanBg) {
         const piece = document.createElement("div");
@@ -107,7 +107,7 @@
           left: left + "px",
           top: (top - fudge) + "px",
           width: rc.width + "px",
-          height: (rc.height + 2*fudge) + "px",
+          height: (rc.height + 2 * fudge) + "px",
           borderRadius: "4px",
           backgroundImage: GRADIENT_BG,
           backgroundRepeat: "no-repeat",
@@ -140,7 +140,7 @@
           left: left + "px",
           top: (top - fudge) + "px",
           width: rc.width + "px",
-          height: (rc.height + 2*fudge) + "px",
+          height: (rc.height + 2 * fudge) + "px",
           overflow: "hidden",
           backgroundImage: GRADIENT_TEXT, // full opacity stops
           backgroundRepeat: "no-repeat",
@@ -151,8 +151,7 @@
           WebkitTextFillColor: "transparent",
           color: "transparent",
           borderRadius: "4px",
-          display: "block",
-          lineHeight: (rc.height + 2*fudge) + "px",
+          display: "inline-block",
           // Allow justification
           whiteSpace: "normal",
           transform: "translateZ(0)",
@@ -166,6 +165,10 @@
         wrap.style.font = cs.font;
         wrap.style.letterSpacing = cs.letterSpacing;
         wrap.style.wordSpacing = cs.wordSpacing;
+        // Inherit the real line-height when it’s explicit; otherwise let it be “normal”
+        if (cs.lineHeight && cs.lineHeight !== "normal") {
+          wrap.style.lineHeight = cs.lineHeight;
+        }
         wrap.style.direction = cs.direction;
         wrap.style.hyphens = cs.hyphens;
         wrap.style.textAlign = cs.textAlign;          // will be 'justify' on justified pages
