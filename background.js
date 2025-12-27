@@ -1,11 +1,12 @@
-// background.js — MV3 service worker (refactored injection order)
-chrome.action.onClicked.addListener(async (tab) => {
+// background.js — MV2 for testing
+
+chrome.browserAction.onClicked.addListener(async (tab) => {
   if (!tab || !tab.id || !/^https?:/i.test(tab.url || "")) return;
 
   // 1) Try to TOGGLE in-page if SStep is already injected
   let toggle = null;
   try {
-    const [res] = await chrome.scripting.executeScript({
+    const [res] = await chrome.tabs.executeScript({
       target: { tabId: tab.id },
       func: () => {
         const S = window.SStep;
@@ -43,11 +44,14 @@ chrome.action.onClicked.addListener(async (tab) => {
   ];
   try {
     for (const css of cssFiles) {
-      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: [css] });
+      await chrome.tabs.insertCSS({ target: { tabId: tab.id }, files: [css] });
     }
   } catch (e) { }
 
   const files = [
+    // ! PDF support test
+    "sstep/pdf/detect-content-type.js",
+    "sstep/pdf/pdf-adapter.js",
 
     // Settings
     "sstep/settings/settings-storage.js",
@@ -101,8 +105,23 @@ chrome.action.onClicked.addListener(async (tab) => {
     func: () => {
       const S = window.SStep;
       if (!S) return;
+
+      // ! Updated for PDF initialization.
+      const contentType = S.detectContentType();
+      console.log('[SentenceStepper] Content type: ', contentType.type);
+
+      if (contentType.type == 'PDF') {
+        console.log('[SentenceStepper][PDF] Initializing PDF adapter.');
+        if (S.initPDFAdapter) {
+          S.initPDFAdapter().then(() => {
+            console.log('[SentenceStepper][PDF] Adapter initialized successfully.');
+            // TODO: Add... more code...?
+          });
+        }
+      }
       try { (S.Toolbar?.mount ? S.Toolbar.mount : S.addToolbar) && (S.Toolbar?.mount ? S.Toolbar.mount() : S.addToolbar()); } catch (e) { }
       try { S.applyEffect && S.applyEffect(); } catch (e) { }
     }
   });
 });
+
