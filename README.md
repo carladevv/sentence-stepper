@@ -6,10 +6,10 @@ An HTML document sentence indexer and highlighter, that allows you to focus on y
 <div align="center">
 
 ### Chrome Extension
-[![Install from Chrome Web Store](https://img.shields.io/badge/Install_Chrome-Extension-blue?logo=google-chrome&logoColor=white&style=for-the-badge)](https://chrome.google.com/webstore/detail/YOUR-EXTENSION-ID)
+[![Install from Chrome Web Store](https://img.shields.io/badge/Install_Chrome-Extension-blue?logo=google-chrome&logoColor=white&style=for-the-badge)](https://chromewebstore.google.com/detail/sentence-stepper/cfiappnihemjkaaepefjfofagcobikek)
 
 ### Firefox Add-on
-[![Install from Firefox Add-ons](https://img.shields.io/badge/Install_Firefox-Add_on-orange?logo=firefox-browser&logoColor=white&style=for-the-badge)](https://addons.mozilla.org/firefox/addon/YOUR-EXTENSION-NAME)
+[![Install from Firefox Add-ons](https://img.shields.io/badge/Install_Firefox-Add_on-orange?logo=firefox-browser&logoColor=white&style=for-the-badge)](https://addons.mozilla.org/en-US/firefox/addon/sentence-stepper/)
 
 </div>
 
