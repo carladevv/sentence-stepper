@@ -16,7 +16,7 @@
     const RT = (typeof browser !== "undefined" ? browser : chrome);
     const extURL = (p) => (RT?.runtime?.getURL ? RT.runtime.getURL(p) : p);
     if (gear) {
-      gear.src = extURL("other-icons/gear.png");
+      gear.src = extURL("assets/ui-icons/gear.png");
       gear.style.width = "18px";
       gear.style.height = "18px";
       gear.style.display = "block";

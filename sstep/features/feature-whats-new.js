@@ -143,7 +143,7 @@
         // Feature image (max 400px wide, auto height), centered
         const img = document.createElement("img");
         img.alt = "New features preview";
-        img.src = extURL("images/new_features.PNG");
+        img.src = extURL("assets/images/new_features.PNG");
         Object.assign(img.style, {
             display: "block",
             maxWidth: "400px",

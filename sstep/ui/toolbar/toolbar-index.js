@@ -94,7 +94,7 @@
 
     const kofiIcon = document.getElementById("sstep-kofi-icon");
     if (kofiIcon) {
-      kofiIcon.src = extURL("other-icons/kofi.png");
+      kofiIcon.src = extURL("assets/ui-icons/kofi.png");
       kofiIcon.style.width = "18px";
       kofiIcon.style.height = "18px";
       kofiIcon.style.display = "block";

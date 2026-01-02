@@ -40,7 +40,7 @@
       const img = document.createElement("img");
       img.decoding = "async";
       img.loading = "lazy";
-      img.src = extURL(`pos-icons/pos-${m}.png`);
+      img.src = extURL(`assets/ui-icons/pos-icons/pos-${m}.png`);
       img.alt = POS_LABELS[m];
       b.appendChild(img);
       if (m === currentMode) b.classList.add("active");
@@ -57,7 +57,7 @@
 
     function setPosButton(mode) {
       if (!posIcon || !posBtn) return;
-      posIcon.src = extURL(`pos-icons/pos-${mode}.png`);
+      posIcon.src = extURL(`assets/ui-icons/pos-icons/pos-${mode}.png`);
       posIcon.alt = POS_LABELS[mode] || mode;
       posBtn.title = POS_LABELS[mode] || mode;
     }
